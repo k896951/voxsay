@@ -1,7 +1,4 @@
 # voxsay
-VOICEVOX系のREST APIを呼び出して発声させるCUIクライアント
-
-## これは何
 
 voicevox | coeiroink | lmroid | sharevox のREST APIを呼び出して音声再生するCUIクライアント
 
