@@ -19,16 +19,16 @@ Options:
     -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox>
     -list                 : List speakers for a given product.
     -index N              : specify the speaker index.
-    -speed N              : specify the speedScale.
-    -pitch N              : specify the pitchScale.
-    -intonation N         : specify the intonationScale.
-    -volume N             : specify the volumeScale.
-    -prephonemelength N   : specify the prephonemelength.
-    -postphonemelength N  : specify the postphonemelength.
+    -speed P              : specify the speedScale.
+    -pitch P              : specify the pitchScale.
+    -intonation P         : specify the intonationScale.
+    -volume P             : specify the volumeScale.
+    -prephonemelength P   : specify the prephonemelength.
+    -postphonemelength P  : specify the postphonemelength.
     -t TALKTEXT           : specify the tts text.
 
         * Anything specified after -t is treated as tts text.
-        * Please refer to the value of the editor for each product for the range of N.
+        * Please refer to the value of the editor for each product for the range of P.
 
 F:\Sandbox>
 ```
