@@ -129,7 +129,7 @@ namespace voxsay
 
             try
             {
-                VoiceVoxAudioQuery aq = GetAudioQuery("あ", speaker);
+                VoiceVoxAudioQuery aq = GetAudioQuery("あいうえお", speaker);
 
                 if (aq!=null)
                 {
