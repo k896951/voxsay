@@ -23,7 +23,18 @@ namespace voxsay
 
             if (!opt.IsSafe) return;
 
+            if (opt.IsRequestDevList)
+            {
+                foreach (var item in ApiProxy.GetMMDeviceList())
+                {
+                    Console.WriteLine(string.Format(@"device: ""{0}""", item.FriendlyName));
+                }
+
+                return;
+            }
+
             var api = apis[opt.Product];
+
             if ((opt.IsRequestList) && (opt.Product != null))
             {
                 foreach(var item in api.AvailableCasts())
@@ -38,6 +49,11 @@ namespace voxsay
             {
                 Console.WriteLine(String.Format(@"Error: Unable to connect to {0}", opt.Product));
                 return;
+            }
+
+            if (opt.OutputDevice != "")
+            {
+                api.PlayDeviceName = opt.OutputDevice;
             }
 
             if (opt.Index != null)

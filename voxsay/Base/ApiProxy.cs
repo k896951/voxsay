@@ -308,6 +308,19 @@ namespace voxsay
 
             return mmCapDev;
         }
+
+        public static List<MMDevice> GetMMDeviceList()
+        {
+            List<MMDevice> list = new List<MMDevice>();
+
+            foreach (var item in new MMDeviceEnumerator().EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+            {
+                list.Add(item);
+            }
+            return list;
+        }
+
+
     }
 
 }

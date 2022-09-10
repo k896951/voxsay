@@ -18,7 +18,9 @@ namespace voxsay
         public int? Index { get; private set; } = null;
         public string TalkTest { get; private set; } = null;
         public string SaveFile { get; private set; } = null;
+        public string OutputDevice { get; private set; } = null;
         public bool IsRequestList { get; private set; } = false;
+        public bool IsRequestDevList { get; private set; } = false;
         public bool IsSafe { get; private set; } = false;
 
         List<string> ProdList = new List<string>() { "voicevox", "coeiroink", "lmroid", "sharevox" };
@@ -78,6 +80,10 @@ namespace voxsay
                         IsRequestList = true;
                         break;
 
+                    case "-devlist":
+                        IsRequestDevList = true;
+                        break;
+
                     case "-save":
                         if (i + 1 <= args.Length)
                         {
@@ -111,6 +117,20 @@ namespace voxsay
                         else
                         {
                             Console.WriteLine(@"Error: Incorrect index specification.");
+                            IsSafe = false;
+                        }
+                        break;
+
+                    case "-outputdevice":
+                    case "-od":
+                        if (i + 1 <= args.Length)
+                        {
+                            OutputDevice = args[i + 1];
+                            i++;
+                        }
+                        else
+                        {
+                            Console.WriteLine(@"Error: Incorrect outputdevice specification.");
                             IsSafe = false;
                         }
                         break;
@@ -271,13 +291,16 @@ namespace voxsay
 voxsay command 2022(c) by k896951
 
 command line exsamples:
+    voxsay -devlist
     voxsay <-prod TTS> -list
     voxsay <-prod TTS> <-index N> [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
+    -devlist              : List sound output device.
     -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox>
     -list                 : List speakers for a given product.
     -index N              : specify the speaker index.
+    -outputdevice DEV     : specify the sound output device.
     -speed P              : specify the speedScale.
     -pitch P              : specify the pitchScale.
     -intonation P         : specify the intonationScale.
