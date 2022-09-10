@@ -88,71 +88,71 @@ F:\Sandbox>
 
 以下は各ライセンスで提供されています。
 
-　- NAudio	2.1.0	Mark Heath & Contributors	https://www.nuget.org/packages/NAudio/2.1.0/license
-　- NAudio.Asio	2.1.0	Mark Heath	MIT
-　- NAudio.Core	2.1.0	Mark Heath	MIT
-　- NAudio.Midi	2.1.0	Mark Heath	MIT
-　- NAudio.Wasapi	2.1.0	Mark Heath	MIT
-　- NAudio.WinForms	2.1.0	Mark Heath	MIT
-　- NAudio.WinMM	2.1.0	WinMM	MIT
+- NAudio	2.1.0	Mark Heath & Contributors	https://www.nuget.org/packages/NAudio/2.1.0/license
+- NAudio.Asio	2.1.0	Mark Heath	MIT
+- NAudio.Core	2.1.0	Mark Heath	MIT
+- NAudio.Midi	2.1.0	Mark Heath	MIT
+- NAudio.Wasapi	2.1.0	Mark Heath	MIT
+- NAudio.WinForms	2.1.0	Mark Heath	MIT
+- NAudio.WinMM	2.1.0	WinMM	MIT
 
 #### Microsoft
 
 以下は MITライセンスで提供されています。
 
-　- System.Security.AccessControl	6.0.0
-　- System.Runtime.CompilerServices.Unsafe	6.0.0
-　- System.Diagnostics.DiagnosticSource	6.0.0
-　- Microsoft.Win32.Registry	5.0.0
-　- Microsoft.NETCore.Platforms	6.0.5
+- System.Security.AccessControl	6.0.0
+- System.Runtime.CompilerServices.Unsafe	6.0.0
+- System.Diagnostics.DiagnosticSource	6.0.0
+- Microsoft.Win32.Registry	5.0.0
+- Microsoft.NETCore.Platforms	6.0.5
 
 以下は https://dotnet.microsoft.com/ja-jp/dotnet_library_license.htm で示すライセンスで提供されています。
 
-　- NETStandard.Library	2.0.3
-　- Microsoft.Win32.Primitives	4.3.0
-　- System.AppContext	4.3.0
-　- System.Buffers	4.5.1
-　- System.Collections	4.3.0
-　- System.Collections.Concurrent	4.3.0
-　- System.Console	4.3.1
-　- System.Diagnostics.Debug	4.3.0
-　- System.Diagnostics.Tools	4.3.0
-　- System.Diagnostics.Tracing	4.3.0
-　- System.Globalization	4.3.0
-　- System.Globalization.Calendars	4.3.0
-　- System.IO	4.3.0
-　- System.IO.Compression	4.3.0
-　- System.IO.Compression.ZipFile	4.3.0
-　- System.IO.FileSystem	4.3.0
-　- System.IO.FileSystem.Primitives	4.3.0
-　- System.Linq	4.3.0
-　- System.Linq.Expressions	4.3.0
-　- System.Memory	4.5.5
-　- System.Net.Http	4.3.4
-　- System.Net.Primitives	4.3.1
-　- System.Net.Sockets	4.3.0
-　- System.Numerics.Vectors	4.5.0
-　- System.ObjectModel	4.3.0
-　- System.Reflection	4.3.0
-　- System.Reflection.Extensions	4.3.0
-　- System.Reflection.Primitives	4.3.0
-　- System.Resources.ResourceManager	4.3.0
-　- System.Runtime	4.3.1
-　- System.Runtime.Extensions	4.3.1
-　- System.Runtime.Handles	4.3.0
-　- System.Runtime.InteropServices	4.3.0
-　- System.Runtime.InteropServices.RuntimeInformation	4.3.0
-　- System.Runtime.Numerics	4.3.0
-　- System.Security.Cryptography.Algorithms	4.3.1
-　- System.Security.Cryptography.Encoding	4.3.0
-　- System.Security.Cryptography.Primitives	4.3.0
-　- System.Security.Cryptography.X509Certificates	4.3.2
-　- System.Security.Principal.Windows	5.0.0
-　- System.Text.Encoding	4.3.0
-　- System.Text.Encoding.Extensions	4.3.0
-　- System.Text.RegularExpressions	4.3.1
-　- System.Threading	4.3.0
-　- System.Threading.Tasks	4.3.0
-　- System.Threading.Timer	4.3.0
-　- System.Xml.ReaderWriter	4.3.1
-　- System.Xml.XDocument	4.3.0
+- NETStandard.Library	2.0.3
+- Microsoft.Win32.Primitives	4.3.0
+- System.AppContext	4.3.0
+- System.Buffers	4.5.1
+- System.Collections	4.3.0
+- System.Collections.Concurrent	4.3.0
+- System.Console	4.3.1
+- System.Diagnostics.Debug	4.3.0
+- System.Diagnostics.Tools	4.3.0
+- System.Diagnostics.Tracing	4.3.0
+- System.Globalization	4.3.0
+- System.Globalization.Calendars	4.3.0
+- System.IO	4.3.0
+- System.IO.Compression	4.3.0
+- System.IO.Compression.ZipFile	4.3.0
+- System.IO.FileSystem	4.3.0
+- System.IO.FileSystem.Primitives	4.3.0
+- System.Linq	4.3.0
+- System.Linq.Expressions	4.3.0
+- System.Memory	4.5.5
+- System.Net.Http	4.3.4
+- System.Net.Primitives	4.3.1
+- System.Net.Sockets	4.3.0
+- System.Numerics.Vectors	4.5.0
+- System.ObjectModel	4.3.0
+- System.Reflection	4.3.0
+- System.Reflection.Extensions	4.3.0
+- System.Reflection.Primitives	4.3.0
+- System.Resources.ResourceManager	4.3.0
+- System.Runtime	4.3.1
+- System.Runtime.Extensions	4.3.1
+- System.Runtime.Handles	4.3.0
+- System.Runtime.InteropServices	4.3.0
+- System.Runtime.InteropServices.RuntimeInformation	4.3.0
+- System.Runtime.Numerics	4.3.0
+- System.Security.Cryptography.Algorithms	4.3.1
+- System.Security.Cryptography.Encoding	4.3.0
+- System.Security.Cryptography.Primitives	4.3.0
+- System.Security.Cryptography.X509Certificates	4.3.2
+- System.Security.Principal.Windows	5.0.0
+- System.Text.Encoding	4.3.0
+- System.Text.Encoding.Extensions	4.3.0
+- System.Text.RegularExpressions	4.3.1
+- System.Threading	4.3.0
+- System.Threading.Tasks	4.3.0
+- System.Threading.Timer	4.3.0
+- System.Xml.ReaderWriter	4.3.1
+- System.Xml.XDocument	4.3.0
