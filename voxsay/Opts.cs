@@ -15,6 +15,7 @@ namespace voxsay
         public double? VolumeScale { get; private set; } = null;
         public double? PrePhonemeLength { get; private set; } = null;
         public double? PostPhonemeLength { get; private set; } = null;
+        public int? ResamplingRate { get; set; } = null;
         public int? Index { get; private set; } = null;
         public string TalkTest { get; private set; } = null;
         public string SaveFile { get; private set; } = null;
@@ -97,7 +98,30 @@ namespace voxsay
                         }
                         break;
 
-                                Console.WriteLine(@"Error: Invalid samplerate specification.");
+                    case "-samplingrate":
+                    case "-rsr":
+                        if (i + 1 <= args.Length)
+                        {
+                            int result;
+                            ResamplingRate = null;
+                            if (int.TryParse(args[i + 1], out result))
+                            {
+                                ResamplingRate = result;
+                            }
+                            else
+                            {
+                                Console.WriteLine(@"Error: Invalid samplingrate specification.");
+                                IsSafe = false;
+                            }
+                            i++;
+                        }
+                        else
+                        {
+                            Console.WriteLine(@"Error: Incorrect samplingrate specification.");
+                            IsSafe = false;
+                        }
+                        break;
+
                     case "-index":
                     case "-i":
                         if (i + 1 <= args.Length)
@@ -294,24 +318,40 @@ voxsay command 2022(c) by k896951
 command line exsamples:
     voxsay -devlist
     voxsay <-prod TTS> -list
-    voxsay <-prod TTS> <-index N> [option [option [... [option] ] ] ] -t TALKTEXT
+    voxsay <-prod TTS> <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
-    -devlist              : List sound output device.
+    -devlist              : List playback device.
     -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox>
     -list                 : List speakers for a given product.
+
     -index N              : specify the speaker index.
-    -outputdevice DEV     : specify the sound output device.
+                            Example: -index 4 -> Speak with the 4th speaker.
+
+    -samplingrate Hz      : Change audio sampling rate.
+                            Example : -samplingrate 8000 -> Change the sampling rate to 8khz.
+                            Note: Quantization bit number is 16bit only.
+
+    -save FILENAME        : Save audio with specified file name.
+                            Example: -save Hellow  -> Output audio to file ""Hellow.wav"".
+                            Note: No audio playback with this option.
+
+    -outputdevice DEV     : Change playback device.
+                            Example: -outputdevice ""OUT(UA-4FX)"" -> Output audio to device ""OUT(UA-4FX)""
+
     -speed P              : specify the speedScale.
     -pitch P              : specify the pitchScale.
     -intonation P         : specify the intonationScale.
     -volume P             : specify the volumeScale.
     -prephonemelength P   : specify the prephonemelength.
     -postphonemelength P  : specify the postphonemelength.
-    -t TALKTEXT           : specify the tts text.
+
+    -t TALKTEXT           : Text to output in tts.
+                            Example : -t Hellow world! -> say ""Hello world!""
 
         * Anything specified after -t is treated as tts text.
-        * Please refer to the value of the editor for each product for the range of P."
+        * Please refer to the value of the editor for each product for the range of P.
+"
             );
         }
     }

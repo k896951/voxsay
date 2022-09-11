@@ -51,7 +51,7 @@ namespace voxsay
             client.DefaultRequestHeaders.Add("User-Agent", "AssistantSeika Driver");
         }
 
-        private void PostSynthesisQuery(VoiceVoxAudioQuery aq, int speaker, string saveFileName = "")
+        private void PostSynthesisQuery(VoiceVoxAudioQuery aq, int speaker, string saveFileName, int? sampleRate)
         {
             var json = new DataContractJsonSerializer(typeof(VoiceVoxAudioQuery));
             MemoryStream ms = new MemoryStream();
@@ -69,16 +69,55 @@ namespace voxsay
 
                     if (response.StatusCode== System.Net.HttpStatusCode.OK)
                     {
-                        string tempFileName = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
-                        using (FileStream tempfile = new FileStream(tempFileName, FileMode.Create, FileAccess.Write, FileShare.None))
+                        //string tempFileName = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
+                        string tempFileName1 = "";
+                        string tempFileName2 = "";
+
+                        if (sampleRate != null)
+                        {
+                            tempFileName1 = Path.GetTempFileName();
+                            tempFileName2 = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
+                        }
+                        else
+                        {
+                            tempFileName1 = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
+                            tempFileName2 = "";
+                        }
+
+                        using (FileStream tempfile = new FileStream(tempFileName1, FileMode.Create, FileAccess.Write, FileShare.None))
                         {
                             await response.Content.CopyToAsync(tempfile);
                         }
 
-                        if (saveFileName == "")
+                        if (sampleRate != null)
                         {
-                            PlayWaveFile(tempFileName);
+                            using (var inputReader = new AudioFileReader(tempFileName1))
+                            {
+                                WaveFormat toWavFormat = new WaveFormat((int)sampleRate, 16, 1);
+                                using (var resample = new MediaFoundationResampler(inputReader, toWavFormat))
+                                {
+                                    resample.ResamplerQuality = 60; // これがベストらしい
+                                    WaveFileWriter.CreateWaveFile(tempFileName2, resample);
+                                }
+                            }
+
+                            File.Delete(tempFileName1);
+
+                            if (saveFileName == "")
+                            {
+                                PlayWaveFile(tempFileName2);
+                                File.Delete(tempFileName2);
+                            }
                         }
+                        else
+                        {
+                            if (saveFileName == "")
+                            {
+                                PlayWaveFile(tempFileName1);
+                                File.Delete(tempFileName1);
+                            }
+                        }
+
                     }
                 }
                 catch (Exception e)
@@ -192,10 +231,11 @@ namespace voxsay
         /// <param name="speaker">話者番号</param>
         /// <param name="param">エフェクト</param>
         /// <param name="text">発声させるテキスト</param>
-        public void Speak(int speaker, VoiceVoxParams param, string text)
+        public void Speak(int speaker, VoiceVoxParams param, string text, int? rate)
         {
 
             VoiceVoxAudioQuery aq = GetAudioQuery(text, speaker);
+            int? samplingrate = rate;
 
             if (param != null)
             {
@@ -207,7 +247,7 @@ namespace voxsay
                 aq.postPhonemeLength = param.postPhonemeLength;
             }
 
-            PostSynthesisQuery(aq, speaker);
+            PostSynthesisQuery(aq, speaker, "", samplingrate);
         }
 
         /// <summary>
@@ -217,9 +257,11 @@ namespace voxsay
         /// <param name="param">エフェクト</param>
         /// <param name="text">発声させるテキスト</param>
         /// <param name="WavFilePath">保存するファイル名</param>
-        public void Save(int speaker, VoiceVoxParams param, string text, string WavFilePath)
+        /// <param name="rate">変換時サンプリングレート</param>
+        public void Save(int speaker, VoiceVoxParams param, string text, string WavFilePath, int? rate)
         {
             VoiceVoxAudioQuery aq = GetAudioQuery(text, speaker);
+            int? samplingrate = rate;
 
             if (param != null)
             {
@@ -231,7 +273,7 @@ namespace voxsay
                 aq.postPhonemeLength = param.postPhonemeLength;
             }
 
-            PostSynthesisQuery(aq, speaker, WavFilePath);
+            PostSynthesisQuery(aq, speaker, WavFilePath, samplingrate);
         }
 
         public bool CheckConnectivity()

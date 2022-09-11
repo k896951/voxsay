@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace voxsay
@@ -68,11 +69,16 @@ namespace voxsay
 
                 if(opt.SaveFile != null)
                 {
-                    api.Save((int)opt.Index, pm, opt.TalkTest, opt.SaveFile);
+                    string f = opt.SaveFile;
+                    Regex ext = new Regex(@"\.[wW][aA][vV][eE]*$");
+
+                    if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
+
+                    api.Save((int)opt.Index, pm, opt.TalkTest, f, opt.ResamplingRate);
                 }
                 else
                 {
-                    api.Speak((int)opt.Index, pm, opt.TalkTest);
+                    api.Speak((int)opt.Index, pm, opt.TalkTest, opt.ResamplingRate);
                 }
             }
         }
