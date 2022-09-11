@@ -97,6 +97,7 @@ namespace voxsay
                         }
                         break;
 
+                                Console.WriteLine(@"Error: Invalid samplerate specification.");
                     case "-index":
                     case "-i":
                         if (i + 1 <= args.Length)
