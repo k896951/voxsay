@@ -12,13 +12,16 @@ F:\Sandbox>voxsay
 voxsay command 2022(c) by k896951
 
 command line exsamples:
+    voxsay -devlist
     voxsay <-prod TTS> -list
     voxsay <-prod TTS> <-index N> [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
+    -devlist              : List sound output device.
     -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox>
     -list                 : List speakers for a given product.
     -index N              : specify the speaker index.
+    -outputdevice DEV     : specify the sound output device.
     -speed P              : specify the speedScale.
     -pitch P              : specify the pitchScale.
     -intonation P         : specify the intonationScale.
