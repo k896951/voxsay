@@ -15,7 +15,8 @@ namespace voxsay
             { "voicevox",   new ApiProxy("http://127.0.0.1:50021") },
             { "coeiroink",  new ApiProxy("http://127.0.0.1:50031") },
             { "lmroid",     new ApiProxy("http://127.0.0.1:50073") },
-            { "sharevox",   new ApiProxy("http://127.0.0.1:50025") }
+            { "sharevox",   new ApiProxy("http://127.0.0.1:50025") },
+            { "itvoice",    new ApiProxy("http://127.0.0.1:49540") }
         };
 
         static void Main(string[] args)
@@ -70,7 +71,7 @@ namespace voxsay
                 if(opt.SaveFile != null)
                 {
                     string f = opt.SaveFile;
-                    Regex ext = new Regex(@"\.[wW][aA][vV][eE]*$");
+                    Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
 
                     if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
 
