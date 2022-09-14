@@ -69,53 +69,17 @@ namespace voxsay
 
                     if (response.StatusCode== System.Net.HttpStatusCode.OK)
                     {
-                        //string tempFileName = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
-                        string tempFileName1 = "";
-                        string tempFileName2 = "";
+                        string tempFileName = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
 
-                        if (sampleRate != null)
-                        {
-                            tempFileName1 = Path.GetTempFileName();
-                            tempFileName2 = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
-                        }
-                        else
-                        {
-                            tempFileName1 = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
-                            tempFileName2 = "";
-                        }
-
-                        using (FileStream tempfile = new FileStream(tempFileName1, FileMode.Create, FileAccess.Write, FileShare.None))
+                        using (FileStream tempfile = new FileStream(tempFileName, FileMode.Create, FileAccess.Write, FileShare.None))
                         {
                             await response.Content.CopyToAsync(tempfile);
                         }
 
-                        if (sampleRate != null)
+                        if (saveFileName == "")
                         {
-                            using (var inputReader = new AudioFileReader(tempFileName1))
-                            {
-                                WaveFormat toWavFormat = new WaveFormat((int)sampleRate, 16, 1);
-                                using (var resample = new MediaFoundationResampler(inputReader, toWavFormat))
-                                {
-                                    resample.ResamplerQuality = 60; // これがベストらしい
-                                    WaveFileWriter.CreateWaveFile(tempFileName2, resample);
-                                }
-                            }
-
-                            File.Delete(tempFileName1);
-
-                            if (saveFileName == "")
-                            {
-                                PlayWaveFile(tempFileName2);
-                                File.Delete(tempFileName2);
-                            }
-                        }
-                        else
-                        {
-                            if (saveFileName == "")
-                            {
-                                PlayWaveFile(tempFileName1);
-                                File.Delete(tempFileName1);
-                            }
+                            PlayWaveFile(tempFileName);
+                            File.Delete(tempFileName);
                         }
 
                     }
@@ -178,6 +142,7 @@ namespace voxsay
                     ans.volumeScale = (double)aq.volumeScale;
                     ans.prePhonemeLength = (double)aq.prePhonemeLength;
                     ans.postPhonemeLength = (double)aq.postPhonemeLength;
+                    ans.outputSamplingRate = (int)aq.outputSamplingRate;
                 }
             }
             catch(Exception e)
@@ -245,6 +210,7 @@ namespace voxsay
                 aq.speedScale = param.speedScale;
                 aq.prePhonemeLength = param.prePhonemeLength;
                 aq.postPhonemeLength = param.postPhonemeLength;
+                aq.outputSamplingRate = param.outputSamplingRate;
             }
 
             PostSynthesisQuery(aq, speaker, "", samplingrate);
@@ -271,6 +237,7 @@ namespace voxsay
                 aq.speedScale = param.speedScale;
                 aq.prePhonemeLength = param.prePhonemeLength;
                 aq.postPhonemeLength = param.postPhonemeLength;
+                aq.outputSamplingRate = param.outputSamplingRate;
             }
 
             PostSynthesisQuery(aq, speaker, WavFilePath, samplingrate);

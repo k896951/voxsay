@@ -15,7 +15,7 @@ namespace voxsay
         public double? VolumeScale { get; private set; } = null;
         public double? PrePhonemeLength { get; private set; } = null;
         public double? PostPhonemeLength { get; private set; } = null;
-        public int? ResamplingRate { get; set; } = null;
+        public int? outputSamplingRate { get; set; } = null;
         public int? Index { get; private set; } = null;
         public string TalkTest { get; private set; } = null;
         public string SaveFile { get; private set; } = null;
@@ -103,10 +103,10 @@ namespace voxsay
                         if (i + 1 <= args.Length)
                         {
                             int result;
-                            ResamplingRate = null;
+                            outputSamplingRate = null;
                             if (int.TryParse(args[i + 1], out result))
                             {
-                                ResamplingRate = result;
+                                outputSamplingRate = result;
                             }
                             else
                             {

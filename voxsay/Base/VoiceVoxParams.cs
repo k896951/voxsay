@@ -8,5 +8,6 @@
         public double volumeScale;
         public double prePhonemeLength;
         public double postPhonemeLength;
+        public int outputSamplingRate;
     }
 }

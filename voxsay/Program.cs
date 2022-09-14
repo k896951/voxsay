@@ -67,19 +67,20 @@ namespace voxsay
                 if (opt.IntonationScale != null) pm.intonationScale = (double)opt.IntonationScale;
                 if (opt.PrePhonemeLength != null) pm.prePhonemeLength = (double)opt.PrePhonemeLength;
                 if (opt.PostPhonemeLength != null) pm.postPhonemeLength = (double)opt.PostPhonemeLength;
+                if (opt.outputSamplingRate != null) pm.outputSamplingRate = (int)opt.outputSamplingRate;
 
-                if(opt.SaveFile != null)
+                if (opt.SaveFile != null)
                 {
                     string f = opt.SaveFile;
                     Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
 
                     if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
 
-                    api.Save((int)opt.Index, pm, opt.TalkTest, f, opt.ResamplingRate);
+                    api.Save((int)opt.Index, pm, opt.TalkTest, f, opt.outputSamplingRate);
                 }
                 else
                 {
-                    api.Speak((int)opt.Index, pm, opt.TalkTest, opt.ResamplingRate);
+                    api.Speak((int)opt.Index, pm, opt.TalkTest, opt.outputSamplingRate);
                 }
             }
         }
