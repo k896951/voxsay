@@ -24,7 +24,7 @@ namespace voxsay
         public bool IsRequestDevList { get; private set; } = false;
         public bool IsSafe { get; private set; } = false;
 
-        List<string> ProdList = new List<string>() { "voicevox", "coeiroink", "lmroid", "sharevox" };
+        List<string> ProdList = new List<string>() { "voicevox", "coeiroink", "lmroid", "sharevox", "itvoice" };
 
         public Opts(string[] args)
         {
@@ -313,7 +313,7 @@ namespace voxsay
         {
             Console.WriteLine(
                 @"
-voxsay command 2022(c) by k896951
+voxsay command (c)2022 by k896951
 
 command line exsamples:
     voxsay -devlist
@@ -322,7 +322,7 @@ command line exsamples:
 
 Options:
     -devlist              : List playback device.
-    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox>
+    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox | itvoice>
     -list                 : List speakers for a given product.
 
     -index N              : specify the speaker index.
