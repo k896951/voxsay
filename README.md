@@ -1,6 +1,6 @@
 # voxsay
 
-voicevox | coeiroink | lmroid | sharevox のREST APIを呼び出して音声再生するWindows用のCUIクライアント
+voicevox | coeiroink | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用のCUIクライアント
 
 ## 使用方法
 
