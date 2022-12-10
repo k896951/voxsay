@@ -9,7 +9,7 @@ voicevox | coeiroink | lmroid | sharevox のREST APIを呼び出して音声再�
 ```
 F:\Sandbox>voxsay
 
-voxsay command 2022(c) by k896951
+voxsay command (c)2022 by k896951
 
 command line exsamples:
     voxsay -devlist
@@ -18,7 +18,7 @@ command line exsamples:
 
 Options:
     -devlist              : List playback device.
-    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox>
+    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox | itvoice>
     -list                 : List speakers for a given product.
 
     -index N              : specify the speaker index.
