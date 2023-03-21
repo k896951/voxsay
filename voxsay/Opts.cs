@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace voxsay
 {
@@ -15,7 +13,7 @@ namespace voxsay
         public double? VolumeScale { get; private set; } = null;
         public double? PrePhonemeLength { get; private set; } = null;
         public double? PostPhonemeLength { get; private set; } = null;
-        public int? outputSamplingRate { get; set; } = null;
+        public int? OutputSamplingRate { get; set; } = null;
         public int? Index { get; private set; } = null;
         public string TalkTest { get; private set; } = null;
         public string SaveFile { get; private set; } = null;
@@ -23,12 +21,38 @@ namespace voxsay
         public bool IsRequestList { get; private set; } = false;
         public bool IsRequestDevList { get; private set; } = false;
         public bool IsSafe { get; private set; } = false;
+        public ProductMap ProductHostInfo
+        {
+            get
+            {
+                return ProdMap[Product];
+            }
+        }
 
-        List<string> ProdList = new List<string>() { "voicevox", "coeiroink", "lmroid", "sharevox", "itvoice" };
+        public string ProductUrl
+        {
+            get
+            {
+                return string.Format(@"http://{0}:{1}", ProductHostInfo.Hostname, ProductHostInfo.Portnumber);
+            }
+        }
+        List<string> ProdList = null;
+
+        Dictionary<string, ProductMap> ProdMap = new Dictionary<string, ProductMap>()
+        {
+            { "voicevox",  new ProductMap("127.0.0.1", 50021) },
+            { "coeiroink", new ProductMap("127.0.0.1", 50031) },
+            { "lmroid",    new ProductMap("127.0.0.1", 50073) },
+            { "sharevox",  new ProductMap("127.0.0.1", 50025) },
+            { "itvoice",   new ProductMap("127.0.0.1", 49540) }
+        };
+
 
         public Opts(string[] args)
         {
             bool tonly = false;
+            ProdList = ProdMap.Select(k => k.Key).ToList();
+            Index = 0;
 
             if (args.Length == 0)
             {
@@ -50,31 +74,62 @@ namespace voxsay
                 {
                     case "-t":
                         tonly = true;
-                        if (i + 1 <= args.Length)
-                        {
-                            TalkTest = args[i + 1];
-                            i++;
-                        }
                         break;
 
                     case "-prod":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 > args.Length)
                         {
-                            Product = args[i + 1].ToLower();
-                            i++;
-
-                            if(!ProdList.Contains(Product))
-                            {
-                                Product = null;
-                                IsSafe = false;
-                                Console.WriteLine(@"Error: unknown prod specification.");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine(@"Error: Incorrect prod specification.");
+                            Console.WriteLine(@"Error: Need Product.");
                             IsSafe = false;
+                            break;
                         }
+
+                        Product = args[i + 1].ToLower();
+                        i++;
+
+                        if (!ProdList.Contains(Product))
+                        {
+                            Product = null;
+                            IsSafe = false;
+                            Console.WriteLine(@"Error: unknown prod specification.");
+                        }
+                        break;
+
+                    case "-host":
+                    case "-port":
+                        if (Product == null)
+                        {
+                            Console.WriteLine(@"Error: -prod option not specified.");
+                            IsSafe = false;
+                            break;
+                        }
+                        if (i + 1 > args.Length)
+                        {
+                            Console.WriteLine(@"Error: Need Hostname or Portnumber.");
+                            IsSafe = false;
+                            break;
+                        }
+
+                        switch (args[i])
+                        {
+                            case "-host":
+                                ProdMap[Product].Hostname = args[i + 1];
+                                break;
+
+                            case "-port":
+                                if (int.TryParse(args[i + 1], out int port))
+                                {
+                                    ProdMap[Product].Portnumber = port;
+                                }
+                                else
+                                {
+                                    Console.WriteLine(@"Error: Incorrect port number.");
+                                    IsSafe = false;
+                                    break;
+                                }
+                                break;
+                        }
+                        i++;
                         break;
 
                     case "-list":
@@ -103,10 +158,10 @@ namespace voxsay
                         if (i + 1 <= args.Length)
                         {
                             int result;
-                            outputSamplingRate = null;
+                            OutputSamplingRate = null;
                             if (int.TryParse(args[i + 1], out result))
                             {
-                                outputSamplingRate = result;
+                                OutputSamplingRate = result;
                             }
                             else
                             {
@@ -313,16 +368,18 @@ namespace voxsay
         {
             Console.WriteLine(
                 @"
-voxsay command (c)2022 by k896951
+voxsay command (c)2022,2023 by k896951
 
 command line exsamples:
     voxsay -devlist
-    voxsay <-prod TTS> -list
-    voxsay <-prod TTS> <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
+    voxsay <-prod TTS> [-host host] [-port port] -list
+    voxsay <-prod TTS> [-host host] [-port port] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
     -devlist              : List playback device.
     -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox | itvoice>
+    -host                 : Host name of TTS service running.
+    -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
 
     -index N              : specify the speaker index.

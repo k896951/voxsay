@@ -1,24 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO.Pipes;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace voxsay
 {
     internal class Program
     {
-        static Dictionary<string, ApiProxy> apis = new Dictionary<string, ApiProxy>
-        {
-            { "voicevox",   new ApiProxy("http://127.0.0.1:50021") },
-            { "coeiroink",  new ApiProxy("http://127.0.0.1:50031") },
-            { "lmroid",     new ApiProxy("http://127.0.0.1:50073") },
-            { "sharevox",   new ApiProxy("http://127.0.0.1:50025") },
-            { "itvoice",    new ApiProxy("http://127.0.0.1:49540") }
-        };
-
         static void Main(string[] args)
         {
             Opts opt = new Opts(args);
@@ -35,7 +21,7 @@ namespace voxsay
                 return;
             }
 
-            var api = apis[opt.Product];
+            var api = new ApiProxy(opt.ProductUrl);
 
             if ((opt.IsRequestList) && (opt.Product != null))
             {
@@ -67,7 +53,7 @@ namespace voxsay
                 if (opt.IntonationScale != null) pm.intonationScale = (double)opt.IntonationScale;
                 if (opt.PrePhonemeLength != null) pm.prePhonemeLength = (double)opt.PrePhonemeLength;
                 if (opt.PostPhonemeLength != null) pm.postPhonemeLength = (double)opt.PostPhonemeLength;
-                if (opt.outputSamplingRate != null) pm.outputSamplingRate = (int)opt.outputSamplingRate;
+                if (opt.OutputSamplingRate != null) pm.outputSamplingRate = (int)opt.OutputSamplingRate;
 
                 if (opt.SaveFile != null)
                 {
@@ -76,11 +62,11 @@ namespace voxsay
 
                     if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
 
-                    api.Save((int)opt.Index, pm, opt.TalkTest, f, opt.outputSamplingRate);
+                    api.Save((int)opt.Index, pm, opt.TalkTest, f);
                 }
                 else
                 {
-                    api.Speak((int)opt.Index, pm, opt.TalkTest, opt.outputSamplingRate);
+                    api.Speak((int)opt.Index, pm, opt.TalkTest);
                 }
             }
         }

@@ -4,13 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime;
-using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using NAudio;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
@@ -51,7 +48,7 @@ namespace voxsay
             client.DefaultRequestHeaders.Add("User-Agent", "AssistantSeika Driver");
         }
 
-        private void PostSynthesisQuery(VoiceVoxAudioQuery aq, int speaker, string saveFileName, int? sampleRate)
+        private void PostSynthesisQuery(VoiceVoxAudioQuery aq, int speaker, string saveFileName)
         {
             var json = new DataContractJsonSerializer(typeof(VoiceVoxAudioQuery));
             MemoryStream ms = new MemoryStream();
@@ -196,11 +193,10 @@ namespace voxsay
         /// <param name="speaker">話者番号</param>
         /// <param name="param">エフェクト</param>
         /// <param name="text">発声させるテキスト</param>
-        public void Speak(int speaker, VoiceVoxParams param, string text, int? rate)
+        public void Speak(int speaker, VoiceVoxParams param, string text)
         {
 
             VoiceVoxAudioQuery aq = GetAudioQuery(text, speaker);
-            int? samplingrate = rate;
 
             if (param != null)
             {
@@ -213,7 +209,7 @@ namespace voxsay
                 aq.outputSamplingRate = param.outputSamplingRate;
             }
 
-            PostSynthesisQuery(aq, speaker, "", samplingrate);
+            PostSynthesisQuery(aq, speaker, "");
         }
 
         /// <summary>
@@ -223,11 +219,9 @@ namespace voxsay
         /// <param name="param">エフェクト</param>
         /// <param name="text">発声させるテキスト</param>
         /// <param name="WavFilePath">保存するファイル名</param>
-        /// <param name="rate">変換時サンプリングレート</param>
-        public void Save(int speaker, VoiceVoxParams param, string text, string WavFilePath, int? rate)
+        public void Save(int speaker, VoiceVoxParams param, string text, string WavFilePath)
         {
             VoiceVoxAudioQuery aq = GetAudioQuery(text, speaker);
-            int? samplingrate = rate;
 
             if (param != null)
             {
@@ -240,7 +234,7 @@ namespace voxsay
                 aq.outputSamplingRate = param.outputSamplingRate;
             }
 
-            PostSynthesisQuery(aq, speaker, WavFilePath, samplingrate);
+            PostSynthesisQuery(aq, speaker, WavFilePath);
         }
 
         public bool CheckConnectivity()

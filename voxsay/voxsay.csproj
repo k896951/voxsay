@@ -225,6 +225,7 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -238,6 +239,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Base\ApiProxy.cs" />
+    <Compile Include="Base\ProductMap.cs" />
     <Compile Include="Opts.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
