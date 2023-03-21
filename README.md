@@ -13,12 +13,14 @@ voxsay command (c)2022 by k896951
 
 command line exsamples:
     voxsay -devlist
-    voxsay <-prod TTS> -list
-    voxsay <-prod TTS> <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
+    voxsay <-prod TTS> [-host] [-port] -list
+    voxsay <-prod TTS> [-host] [-port] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
     -devlist              : List playback device.
     -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox | itvoice>
+    -host                 : Host name of TTS service running.
+    -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
 
     -index N              : specify the speaker index.
@@ -47,6 +49,7 @@ Options:
 
         * Anything specified after -t is treated as tts text.
         * Please refer to the value of the editor for each product for the range of P.
+
 
 F:\Sandbox>
 ```
