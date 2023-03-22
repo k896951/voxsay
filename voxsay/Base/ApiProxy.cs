@@ -48,10 +48,12 @@ namespace voxsay
             client.DefaultRequestHeaders.Add("User-Agent", "AssistantSeika Driver");
         }
 
-        private void PostSynthesisQuery(VoiceVoxAudioQuery aq, int speaker, string saveFileName)
+        private bool PostSynthesisQuery(VoiceVoxAudioQuery aq, int speaker, string saveFileName)
         {
             var json = new DataContractJsonSerializer(typeof(VoiceVoxAudioQuery));
             MemoryStream ms = new MemoryStream();
+            bool ans = true;
+
             json.WriteObject(ms, aq);
 
             var content = new StringContent(Encoding.UTF8.GetString(ms.ToArray()), Encoding.UTF8, "application/json");
@@ -84,8 +86,11 @@ namespace voxsay
                 catch (Exception e)
                 {
                     Console.WriteLine("PostSynthesisQuery:{0}", e.Message);
+                    ans = false;
                 }
             }).Wait();
+
+            return ans;
         }
 
         private VoiceVoxAudioQuery GetAudioQuery(string text, int speaker)
@@ -112,6 +117,7 @@ namespace voxsay
                 catch (Exception e)
                 {
                     Console.WriteLine("GetAudioQuery:{0}", e.Message);
+                    ans = null;
                 }
             }).Wait();
 
@@ -145,6 +151,7 @@ namespace voxsay
             catch(Exception e)
             {
                 Console.WriteLine("GetAvatorParams:{0}", e.Message);
+                ans = null;
             }
 
             return ans;
@@ -181,6 +188,7 @@ namespace voxsay
                 catch (Exception e)
                 {
                     Console.WriteLine("AvailableCasts:{0}", e.Message);
+                    ans = null;
                 }
             }).Wait();
 
@@ -193,12 +201,11 @@ namespace voxsay
         /// <param name="speaker">話者番号</param>
         /// <param name="param">エフェクト</param>
         /// <param name="text">発声させるテキスト</param>
-        public void Speak(int speaker, VoiceVoxParams param, string text)
+        public bool Speak(int speaker, VoiceVoxParams param, string text)
         {
-
             VoiceVoxAudioQuery aq = GetAudioQuery(text, speaker);
 
-            if (param != null)
+            if ((aq != null) && (param != null))
             {
                 aq.volumeScale = param.volumeScale;
                 aq.intonationScale = param.intonationScale;
@@ -209,7 +216,7 @@ namespace voxsay
                 aq.outputSamplingRate = param.outputSamplingRate;
             }
 
-            PostSynthesisQuery(aq, speaker, "");
+            return PostSynthesisQuery(aq, speaker, "");
         }
 
         /// <summary>
@@ -219,11 +226,11 @@ namespace voxsay
         /// <param name="param">エフェクト</param>
         /// <param name="text">発声させるテキスト</param>
         /// <param name="WavFilePath">保存するファイル名</param>
-        public void Save(int speaker, VoiceVoxParams param, string text, string WavFilePath)
+        public bool Save(int speaker, VoiceVoxParams param, string text, string WavFilePath)
         {
             VoiceVoxAudioQuery aq = GetAudioQuery(text, speaker);
 
-            if (param != null)
+            if ((aq != null) && (param != null))
             {
                 aq.volumeScale = param.volumeScale;
                 aq.intonationScale = param.intonationScale;
@@ -234,7 +241,7 @@ namespace voxsay
                 aq.outputSamplingRate = param.outputSamplingRate;
             }
 
-            PostSynthesisQuery(aq, speaker, WavFilePath);
+            return PostSynthesisQuery(aq, speaker, WavFilePath);
         }
 
         public bool CheckConnectivity()
@@ -262,6 +269,8 @@ namespace voxsay
 
         private bool PlayWaveFile(string WavFilePath)
         {
+            bool ans = true;
+
             try
             {
                 var dev = GetMMDevice(PlayDeviceName);
@@ -280,9 +289,10 @@ namespace voxsay
             catch (Exception f2sd)
             {
                 Console.WriteLine("PlayWaveFile:{0}", f2sd.Message);
+                ans = false;
             }
 
-            return true;
+            return ans;
         }
 
         private MMDevice GetMMDevice(string mmDeviceName)

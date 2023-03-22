@@ -5,11 +5,12 @@ namespace voxsay
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
+            int rcd = 0;
             Opts opt = new Opts(args);
 
-            if (!opt.IsSafe) return;
+            if (!opt.IsSafe) return 8;
 
             if (opt.IsRequestDevList)
             {
@@ -18,10 +19,16 @@ namespace voxsay
                     Console.WriteLine(string.Format(@"device: ""{0}""", item.FriendlyName));
                 }
 
-                return;
+                return 0;
             }
 
             var api = new ApiProxy(opt.ProductUrl);
+
+            if (!api.CheckConnectivity())
+            {
+                Console.WriteLine(String.Format(@"Error: Unable to connect to {0}", opt.Product));
+                return 8;
+            }
 
             if ((opt.IsRequestList) && (opt.Product != null))
             {
@@ -30,13 +37,7 @@ namespace voxsay
                     Console.WriteLine(string.Format(@"index: {0},  speaker:{1}", item.Key, item.Value));
                 }
 
-                return;
-            }
-
-            if (!api.CheckConnectivity())
-            {
-                Console.WriteLine(String.Format(@"Error: Unable to connect to {0}", opt.Product));
-                return;
+                return 0;
             }
 
             if (opt.OutputDevice != "")
@@ -62,13 +63,15 @@ namespace voxsay
 
                     if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
 
-                    api.Save((int)opt.Index, pm, opt.TalkTest, f);
+                    if (!api.Save((int)opt.Index, pm, opt.TalkTest, f)) rcd = 8;
                 }
                 else
                 {
-                    api.Speak((int)opt.Index, pm, opt.TalkTest);
+                    if (!api.Speak((int)opt.Index, pm, opt.TalkTest)) rcd = 8;
                 }
             }
+
+            return rcd;
         }
     }
 }
