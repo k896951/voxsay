@@ -239,17 +239,30 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Base\ApiProxy.cs" />
+    <Compile Include="Base\AudioQuery.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2Prosody.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2ProsodyDetail.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2StyleidToSpeakerMeta.cs" />
+    <Compile Include="Base\SpeakerParams.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2Speaker.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2SpeakerStyle.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2AudioQuery.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2AccentPhrase.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2Mora.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2PauseMora.cs" />
+    <Compile Include="Base\Coeiroink\Coeiroinkv2Params.cs" />
+    <Compile Include="Base\EnumClass.cs" />
     <Compile Include="Base\ProductMap.cs" />
     <Compile Include="Opts.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Base\VoiceVoxAccentPhrase.cs" />
-    <Compile Include="Base\VoiceVoxAudioQuery.cs" />
-    <Compile Include="Base\VoiceVoxMora.cs" />
-    <Compile Include="Base\VoiceVoxParams.cs" />
-    <Compile Include="Base\VoiceVoxPauseMora.cs" />
-    <Compile Include="Base\VoiceVoxSpeaker.cs" />
-    <Compile Include="Base\VoiceVoxSpeakerStyle.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxAccentPhrase.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxAudioQuery.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxMora.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxParams.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxPauseMora.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxSpeaker.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxSpeakerStyle.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

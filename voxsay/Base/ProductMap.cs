@@ -6,16 +6,22 @@ using System.Threading.Tasks;
 
 namespace voxsay
 {
-    internal class ProductMap
+    public class ProductMap
     {
         public string Hostname { get; set; }
 
         public int? Portnumber { get; set; }
 
-        public ProductMap(string host, int port)
+        public string Context { get; set; }
+
+        public ProdnameEnum Product { get; set; }
+
+        public ProductMap(string host, int port, string ctx, ProdnameEnum prod)
         {
             Hostname = host;
             Portnumber = port;
+            Context = ctx;
+            Product = prod;
         }
     }
 }

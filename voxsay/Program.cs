@@ -22,15 +22,15 @@ namespace voxsay
                 return 0;
             }
 
-            var api = new ApiProxy(opt.ProductUrl);
+            var api = new ApiProxy(opt.ProductHostInfo);
 
             if (!api.CheckConnectivity())
             {
-                Console.WriteLine(String.Format(@"Error: Unable to connect to {0}", opt.Product));
+                Console.WriteLine(String.Format(@"Error: Unable to connect to {0}", opt.SelectedProd));
                 return 8;
             }
 
-            if ((opt.IsRequestList) && (opt.Product != null))
+            if ((opt.IsRequestList) && (opt.SelectedProd != ""))
             {
                 foreach(var item in api.AvailableCasts())
                 {
@@ -47,7 +47,7 @@ namespace voxsay
 
             if (opt.Index != null)
             {
-                VoiceVoxParams pm = api.GetAvatorParams((int)opt.Index);
+                SpeakerParams pm = api.GetAvatorParams((int)opt.Index);
                 if (opt.SpeedScale != null) pm.speedScale = (double)opt.SpeedScale;
                 if (opt.PitchScale != null) pm.pitchScale = (double)opt.PitchScale;
                 if (opt.VolumeScale != null) pm.volumeScale = (double)opt.VolumeScale;

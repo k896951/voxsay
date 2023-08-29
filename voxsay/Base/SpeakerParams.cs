@@ -1,6 +1,6 @@
 ﻿namespace voxsay
 {
-    public class VoiceVoxParams
+    public class SpeakerParams
     {
         public double speedScale;
         public double pitchScale;

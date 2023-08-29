@@ -7,10 +7,15 @@ namespace voxsay
     {
         [DataMember]
         public VoiceVoxMora[] moras { get; set; }
+
         [DataMember]
         public int accent { get; set; }
+
         [DataMember]
         public VoiceVoxPauseMora pause_mora { get; set; }
+
+        [DataMember]
+        public bool is_interrogative { get; set; }
     }
 
 

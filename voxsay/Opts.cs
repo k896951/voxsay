@@ -6,7 +6,7 @@ namespace voxsay
 {
     internal class Opts
     {
-        public string Product { get; private set; } = null;
+        public string SelectedProd { get; private set; } = "";
         public double? SpeedScale { get; private set; } = null;
         public double? PitchScale { get; private set; } = null;
         public double? IntonationScale { get; private set; } = null;
@@ -25,7 +25,7 @@ namespace voxsay
         {
             get
             {
-                return ProdMap[Product];
+                return ProdMap[SelectedProd];
             }
         }
 
@@ -33,25 +33,24 @@ namespace voxsay
         {
             get
             {
-                return string.Format(@"http://{0}:{1}", ProductHostInfo.Hostname, ProductHostInfo.Portnumber);
+                return string.Format(@"http://{0}:{1}{2}", ProductHostInfo.Hostname, ProductHostInfo.Portnumber, ProductHostInfo.Context);
             }
         }
-        List<string> ProdList = null;
 
         Dictionary<string, ProductMap> ProdMap = new Dictionary<string, ProductMap>()
         {
-            { "voicevox",  new ProductMap("127.0.0.1", 50021) },
-            { "coeiroink", new ProductMap("127.0.0.1", 50031) },
-            { "lmroid",    new ProductMap("127.0.0.1", 50073) },
-            { "sharevox",  new ProductMap("127.0.0.1", 50025) },
-            { "itvoice",   new ProductMap("127.0.0.1", 49540) }
+            { "voicevox",    new ProductMap("127.0.0.1", 50021, "", ProdnameEnum.voicevox) },
+            { "coeiroink",   new ProductMap("127.0.0.1", 50031, "", ProdnameEnum.coeiroink) },
+            { "coeiroinkv2", new ProductMap("127.0.0.1", 50032, "/v1", ProdnameEnum.coeiroinkv2) },
+            { "lmroid",      new ProductMap("127.0.0.1", 50073, "", ProdnameEnum.lmroid) },
+            { "sharevox",    new ProductMap("127.0.0.1", 50025, "", ProdnameEnum.sharevox) },
+            { "itvoice",     new ProductMap("127.0.0.1", 49540, "", ProdnameEnum.itvoice) }
         };
-
 
         public Opts(string[] args)
         {
             bool tonly = false;
-            ProdList = ProdMap.Select(k => k.Key).ToList();
+            string SelectedProduct = "";
             Index = 0;
 
             if (args.Length == 0)
@@ -84,20 +83,21 @@ namespace voxsay
                             break;
                         }
 
-                        Product = args[i + 1].ToLower();
+                        SelectedProd = SelectedProduct = args[i + 1].ToLower();
                         i++;
 
-                        if (!ProdList.Contains(Product))
+                        if (!ProdMap.ContainsKey(SelectedProduct))
                         {
-                            Product = null;
+                            SelectedProduct = "";
                             IsSafe = false;
                             Console.WriteLine(@"Error: unknown prod specification.");
                         }
+
                         break;
 
                     case "-host":
                     case "-port":
-                        if (Product == null)
+                        if (SelectedProduct == "")
                         {
                             Console.WriteLine(@"Error: -prod option not specified.");
                             IsSafe = false;
@@ -113,13 +113,13 @@ namespace voxsay
                         switch (args[i])
                         {
                             case "-host":
-                                ProdMap[Product].Hostname = args[i + 1];
+                                ProdMap[SelectedProduct].Hostname = args[i + 1];
                                 break;
 
                             case "-port":
                                 if (int.TryParse(args[i + 1], out int port))
                                 {
-                                    ProdMap[Product].Portnumber = port;
+                                    ProdMap[SelectedProduct].Portnumber = port;
                                 }
                                 else
                                 {
@@ -366,6 +366,8 @@ namespace voxsay
 
         private void help()
         {
+            string prods = string.Join(" | ", ProdMap.Keys.ToArray());
+
             Console.WriteLine(
                 @"
 voxsay command (c)2022,2023 by k896951
@@ -377,7 +379,8 @@ command line exsamples:
 
 Options:
     -devlist              : List playback device.
-    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox | itvoice>
+    -prod TTS             : Select tts product. TTS := < " + prods + " >"
++ @"
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
