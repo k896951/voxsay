@@ -1,6 +1,6 @@
 # voxsay
 
-voicevox | coeiroink | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用のCUIクライアント
+voicevox | coeiroink/v2 | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用のCUIクライアント
 
 ## 使用方法
 
@@ -18,7 +18,7 @@ command line exsamples:
 
 Options:
     -devlist              : List playback device.
-    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox | itvoice>
+    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
