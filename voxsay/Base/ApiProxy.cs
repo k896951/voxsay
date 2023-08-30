@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace voxsay
 {
@@ -43,24 +44,195 @@ namespace voxsay
             client?.Dispose();
         }
 
+        /// <summary>
+        /// 話者パラメタの取り出し
+        /// </summary>
+        /// <param name="speaker">話者番号（StyleId）</param>
+        /// <returns>パラメタ情報</returns>
+        public SpeakerParams GetAvatorParams(int speaker)
+        {
+            SpeakerParams ans;
+
+            if (SelectedProd == ProdnameEnum.coeiroinkv2)
+            {
+                // 各種パラメタ値の取得が出来そうなAPIが見つけられなかったので、GUIに設定されていた設定値デフォルトとして適用する
+                ans = new Coeiroinkv2Params();
+
+                ans.intonationScale = 1.0;     // Range:  0    .. 2
+                ans.pitchScale = 0.0;          // Range: -0.15 .. 0.15
+                ans.speedScale = 1.0;          // Range:  0.5  .. 2
+                ans.volumeScale = 1.0;         // Range:  0    .. 2
+                ans.prePhonemeLength = 0.1;    // Range:  0    .. 1.5
+                ans.postPhonemeLength = 0.1;   // Range:  0    .. 1.5
+                ans.outputSamplingRate = 44100;
+            }
+            else
+            {
+                // 面倒なのでVOICEVOXのデフォルト値を適用する。
+                ans = new VoiceVoxParams();
+
+                ans.intonationScale = 1.0;     // Range:  0    .. 2
+                ans.pitchScale = 0.0;          // Range: -0.15 .. 0.15
+                ans.speedScale = 1.0;          // Range:  0.5  .. 2
+                ans.volumeScale = 1.0;         // Range:  0    .. 2
+                ans.prePhonemeLength = 0.1;    // Range:  0    .. 1.5
+                ans.postPhonemeLength = 0.1;   // Range:  0    .. 1.5
+                ans.outputSamplingRate = 44100;
+            }
+
+            return ans;
+        }
+
+        /// <summary>
+        /// 利用可能な話者の取り出し
+        /// </summary>
+        /// <returns>話者番号と名称の組み合わせのリスト</returns>
+        public List<KeyValuePair<int, string>> AvailableCasts()
+        {
+            switch(SelectedProd)
+            {
+                case ProdnameEnum.coeiroinkv2:
+                    return Coeiroinkv2AvailableCasts();
+
+                default:
+                    return VoiceVoxAvailableCasts();
+            }
+        }
+
+        /// <summary>
+        /// 音声保存
+        /// </summary>
+        /// <param name="speaker">話者番号（StyleId）</param>
+        /// <param name="param">エフェクト</param>
+        /// <param name="text">発声させるテキスト</param>
+        /// <param name="WavFilePath">保存するファイル名</param>
+        public bool Save(int speaker, SpeakerParams param, string text, string WavFilePath)
+        {
+            switch(SelectedProd)
+            {
+                case ProdnameEnum.coeiroinkv2:
+                    var coeiroinkv2aq = GetCoeiroinkv2AudioQuery(text, speaker);
+
+                    if ((coeiroinkv2aq != null) && (param != null))
+                    {
+                        coeiroinkv2aq.volumeScale = param.volumeScale;
+                        coeiroinkv2aq.intonationScale = param.intonationScale;
+                        coeiroinkv2aq.pitchScale = param.pitchScale;
+                        coeiroinkv2aq.speedScale = param.speedScale;
+                        coeiroinkv2aq.prePhonemeLength = param.prePhonemeLength;
+                        coeiroinkv2aq.postPhonemeLength = param.postPhonemeLength;
+                        coeiroinkv2aq.outputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    return PostCoeiroinkv2SynthesisQuery(coeiroinkv2aq, speaker, WavFilePath);
+
+                default:
+                    var voicevoxaq = GetVoiceVoxAudioQuery(text, speaker);
+
+                    if ((voicevoxaq != null) && (param != null))
+                    {
+                        voicevoxaq.volumeScale = param.volumeScale;
+                        voicevoxaq.intonationScale = param.intonationScale;
+                        voicevoxaq.pitchScale = param.pitchScale;
+                        voicevoxaq.speedScale = param.speedScale;
+                        voicevoxaq.prePhonemeLength = param.prePhonemeLength;
+                        voicevoxaq.postPhonemeLength = param.postPhonemeLength;
+                        voicevoxaq.outputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    return PostVoiceVoxSynthesisQuery(voicevoxaq, speaker, WavFilePath);
+            }
+        }
+
+        /// <summary>
+        /// 発声
+        /// </summary>
+        /// <param name="speaker">話者番号（StyleId）</param>
+        /// <param name="param">エフェクト</param>
+        /// <param name="text">発声させるテキスト</param>
+        public bool Speak(int speaker, SpeakerParams param, string text)
+        {
+            bool ans = false;
+
+            switch (SelectedProd)
+            {
+                case ProdnameEnum.coeiroinkv2:
+                    var coeiroinkv2aq = GetCoeiroinkv2AudioQuery(text, speaker);
+
+                    if ((coeiroinkv2aq != null) && (param != null))
+                    {
+                        coeiroinkv2aq.volumeScale = param.volumeScale;
+                        coeiroinkv2aq.intonationScale = param.intonationScale;
+                        coeiroinkv2aq.pitchScale = param.pitchScale;
+                        coeiroinkv2aq.speedScale = param.speedScale;
+                        coeiroinkv2aq.prePhonemeLength = param.prePhonemeLength;
+                        coeiroinkv2aq.postPhonemeLength = param.postPhonemeLength;
+                        coeiroinkv2aq.outputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    PostCoeiroinkv2SynthesisQuery(coeiroinkv2aq, speaker, "");
+                    break;
+
+                default:
+                    var voicevoxaq = GetVoiceVoxAudioQuery(text, speaker);
+
+                    if ((voicevoxaq != null) && (param != null))
+                    {
+                        voicevoxaq.volumeScale = param.volumeScale;
+                        voicevoxaq.intonationScale = param.intonationScale;
+                        voicevoxaq.pitchScale = param.pitchScale;
+                        voicevoxaq.speedScale = param.speedScale;
+                        voicevoxaq.prePhonemeLength = param.prePhonemeLength;
+                        voicevoxaq.postPhonemeLength = param.postPhonemeLength;
+                        voicevoxaq.outputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    PostVoiceVoxSynthesisQuery(voicevoxaq, speaker, "");
+                    break;
+            }
+
+            return ans;
+        }
+
+        /// <summary>
+        /// 利用可能確認
+        /// </summary>
+        /// <returns>利用可能ならtrue</returns>
+        public bool CheckConnectivity()
+        {
+            bool ans = false;
+            HttpResponseMessage response = null;
+
+            switch(SelectedProd)
+            {
+                case ProdnameEnum.coeiroinkv2:
+                default:
+
+                    Task.Run(async () => {
+                        try
+                        {
+                            response = await client.GetAsync(string.Format("{0}/speakers", BaseUri));
+
+                            if (response.StatusCode == System.Net.HttpStatusCode.OK) ans = true;
+                        }
+                        catch (Exception)
+                        {
+                            ans = false;
+                        }
+
+                    }).Wait();
+                    break;
+            }
+
+            return ans;
+        }
+
         private void SettingJsonHeader()
         {
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/wav"));
             client.DefaultRequestHeaders.Add("User-Agent", "AssistantSeika Driver");
-        }
-
-        private bool PostSynthesisQuery(AudioQuery aq, int speaker, string saveFileName)
-        {
-            if (SelectedProd == ProdnameEnum.coeiroinkv2)
-            {
-                return PostCoeiroinkv2SynthesisQuery(aq as Coeiroinkv2AudioQuery, speaker, saveFileName);
-            }
-            else
-            {
-                return PostVoiceVoxSynthesisQuery(aq as VoiceVoxAudioQuery, speaker, saveFileName);
-            }
         }
 
         private bool PostVoiceVoxSynthesisQuery(VoiceVoxAudioQuery aq, int speaker, string saveFileName)
@@ -153,18 +325,6 @@ namespace voxsay
             return ans;
         }
 
-        private AudioQuery GetAudioQuery(string text, int speaker)
-        {
-            if (SelectedProd == ProdnameEnum.coeiroinkv2)
-            {
-                return GetCoeiroinkv2AudioQuery(text, speaker);
-            }
-            else
-            {
-                return GetVoiceVoxAudioQuery(text, speaker);
-            }
-        }
-
         private VoiceVoxAudioQuery GetVoiceVoxAudioQuery(string text, int speaker)
         {
             string url = string.Format(@"{0}/audio_query?text={1}&speaker={2}", BaseUri, text, speaker);
@@ -251,61 +411,6 @@ namespace voxsay
             return ans;
         }
 
-        /// <summary>
-        /// 話者パラメタの取り出し
-        /// </summary>
-        /// <param name="speaker">話者番号</param>
-        /// <returns>パラメタ情報</returns>
-        public SpeakerParams GetAvatorParams(int speaker)
-        {
-            SpeakerParams ans;
-
-            if (SelectedProd == ProdnameEnum.coeiroinkv2)
-            {
-                // 各種パラメタ値の取得が出来そうなAPIが見つけられなかったので、GUIに設定されていた設定値デフォルトとして適用する
-                ans = new Coeiroinkv2Params();
-
-                ans.intonationScale = 1.0;     // Range:  0    .. 2
-                ans.pitchScale = 0.0;          // Range: -0.15 .. 0.15
-                ans.speedScale = 1.0;          // Range:  0.5  .. 2
-                ans.volumeScale = 1.0;         // Range:  0    .. 2
-                ans.prePhonemeLength = 0.1;    // Range:  0    .. 1.5
-                ans.postPhonemeLength = 0.1;   // Range:  0    .. 1.5
-                ans.outputSamplingRate = 44100;
-            }
-            else
-            {
-                // 面倒なのでVOICEVOXのデフォルト値を適用する。
-                ans = new VoiceVoxParams();
-
-                ans.intonationScale = 1.0;     // Range:  0    .. 2
-                ans.pitchScale = 0.0;          // Range: -0.15 .. 0.15
-                ans.speedScale = 1.0;          // Range:  0.5  .. 2
-                ans.volumeScale = 1.0;         // Range:  0    .. 2
-                ans.prePhonemeLength = 0.1;    // Range:  0    .. 1.5
-                ans.postPhonemeLength = 0.1;   // Range:  0    .. 1.5
-                ans.outputSamplingRate = 44100;
-            }
-
-            return ans;
-        }
-
-        /// <summary>
-        /// 利用可能な話者の取り出し
-        /// </summary>
-        /// <returns>話者番号と名称の組み合わせのリスト</returns>
-        public List<KeyValuePair<int, string>> AvailableCasts()
-        {
-            if(SelectedProd == ProdnameEnum.coeiroinkv2)
-            {
-                return Coeiroinkv2AvailableCasts();
-            }
-            else
-            {
-                return VoiceVoxAvailableCasts();
-            }
-        }
-
         private List<KeyValuePair<int, string>> VoiceVoxAvailableCasts()
         {
             DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
@@ -369,138 +474,6 @@ namespace voxsay
                     Console.WriteLine("AvailableCasts:{0}", e.Message);
                     ans = null;
                 }
-            }).Wait();
-
-            return ans;
-        }
-
-        /// <summary>
-        /// 発声
-        /// </summary>
-        /// <param name="speaker">話者番号</param>
-        /// <param name="param">エフェクト</param>
-        /// <param name="text">発声させるテキスト</param>
-        public bool Speak(int speaker, SpeakerParams param, string text)
-        {
-            if (SelectedProd == ProdnameEnum.coeiroinkv2)
-            {
-                return Coeiroinkv2Speak(speaker, param, text);
-            }
-            else
-            {
-                return VoiceVoxSpeak(speaker, param, text);
-            }
-        }
-
-        private bool VoiceVoxSpeak(int speaker, SpeakerParams param, string text)
-        {
-            VoiceVoxAudioQuery aq = GetAudioQuery(text, speaker) as VoiceVoxAudioQuery;
-
-            if ((aq != null) && (param != null))
-            {
-                aq.volumeScale = param.volumeScale;
-                aq.intonationScale = param.intonationScale;
-                aq.pitchScale = param.pitchScale;
-                aq.speedScale = param.speedScale;
-                aq.prePhonemeLength = param.prePhonemeLength;
-                aq.postPhonemeLength = param.postPhonemeLength;
-                aq.outputSamplingRate = param.outputSamplingRate;
-            }
-
-            return PostSynthesisQuery(aq, speaker, "");
-        }
-
-        private bool Coeiroinkv2Speak(int speaker, SpeakerParams param, string text)
-        {
-            Coeiroinkv2AudioQuery aq = GetAudioQuery(text, speaker) as Coeiroinkv2AudioQuery;
-
-            if ((aq != null) && (param != null))
-            {
-                aq.volumeScale = param.volumeScale;
-                aq.intonationScale = param.intonationScale;
-                aq.pitchScale = param.pitchScale;
-                aq.speedScale = param.speedScale;
-                aq.prePhonemeLength = param.prePhonemeLength;
-                aq.postPhonemeLength = param.postPhonemeLength;
-                aq.outputSamplingRate = param.outputSamplingRate;
-            }
-
-            return PostSynthesisQuery(aq, speaker, "");
-        }
-
-        /// <summary>
-        /// 音声保存
-        /// </summary>
-        /// <param name="speaker">話者番号</param>
-        /// <param name="param">エフェクト</param>
-        /// <param name="text">発声させるテキスト</param>
-        /// <param name="WavFilePath">保存するファイル名</param>
-        public bool Save(int speaker, SpeakerParams param, string text, string WavFilePath)
-        {
-            if(SelectedProd == ProdnameEnum.coeiroinkv2)
-            {
-                return Coeiroinkv2Save(speaker, param as Coeiroinkv2Params, text, WavFilePath);
-            }
-            else
-            {
-                return VoiceVoxSave(speaker, param as VoiceVoxParams, text, WavFilePath);
-            }
-        }
-
-        private bool VoiceVoxSave(int speaker, VoiceVoxParams param, string text, string WavFilePath)
-        {
-            VoiceVoxAudioQuery aq = GetVoiceVoxAudioQuery(text, speaker);
-
-            if ((aq != null) && (param != null))
-            {
-                aq.volumeScale = param.volumeScale;
-                aq.intonationScale = param.intonationScale;
-                aq.pitchScale = param.pitchScale;
-                aq.speedScale = param.speedScale;
-                aq.prePhonemeLength = param.prePhonemeLength;
-                aq.postPhonemeLength = param.postPhonemeLength;
-                aq.outputSamplingRate = param.outputSamplingRate;
-            }
-
-            return PostSynthesisQuery(aq, speaker, WavFilePath);
-        }
-
-        private bool Coeiroinkv2Save(int speaker,Coeiroinkv2Params param, string text, string WavFilePath)
-        {
-            Coeiroinkv2AudioQuery aq = GetCoeiroinkv2AudioQuery(text, speaker);
-
-            if ((aq != null) && (param != null))
-            {
-                aq.volumeScale = param.volumeScale;
-                aq.intonationScale = param.intonationScale;
-                aq.pitchScale = param.pitchScale;
-                aq.speedScale = param.speedScale;
-                aq.prePhonemeLength = param.prePhonemeLength;
-                aq.postPhonemeLength = param.postPhonemeLength;
-                aq.outputSamplingRate = param.outputSamplingRate;
-            }
-
-            return PostSynthesisQuery(aq, speaker, WavFilePath);
-        }
-
-        public bool CheckConnectivity()
-        {
-            bool ans = true;
-            HttpResponseMessage response = null;
-
-            Task.Run(async () => {
-
-                try
-                {
-                    response = await client.GetAsync(string.Format("{0}/speakers", BaseUri));
-
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK) ans = true;
-                }
-                catch (Exception)
-                {
-                    ans = false;
-                }
-
             }).Wait();
 
             return ans;

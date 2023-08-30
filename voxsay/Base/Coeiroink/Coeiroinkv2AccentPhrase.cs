@@ -12,7 +12,7 @@ namespace voxsay
         public int accent { get; set; }
 
         [DataMember(Name = "pauseMora")]
-        public VoiceVoxPauseMora pause_mora { get; set; }
+        public Coeiroinkv2PauseMora pause_mora { get; set; }
 
         [DataMember]
         public bool isInterrogative { get; set; }
