@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using voxsay;
 
-namespace voxsay
+namespace voxsaycmd
 {
     internal class Program
     {
@@ -12,25 +13,52 @@ namespace voxsay
 
             if (!opt.IsSafe) return 8;
 
+            // 再生デバイス一覧表示
             if (opt.IsRequestDevList)
             {
                 foreach (var item in ApiProxy.GetMMDeviceList())
                 {
-                    Console.WriteLine(string.Format(@"device: ""{0}""", item.FriendlyName));
+                    Console.WriteLine(string.Format(@"device: ""{0}""", item));
                 }
 
                 return 0;
             }
 
-            var api = new ApiProxy(opt.ProductHostInfo);
-
-            if (!api.CheckConnectivity())
+            // 稼働している音声合成製品一覧表示（標準指定）
+            if (opt.IsRequestActiveProductList)
             {
-                Console.WriteLine(String.Format(@"Error: Unable to connect to {0}", opt.SelectedProd));
+                foreach (var item in ApiProxy.ConnectivityList())
+                {
+                    Console.WriteLine(string.Format(@"product: {0}", item.ToString()));
+                }
+
+                return 0;
+            }
+
+            // 知らない製品が指定された
+            if(!ApiProxy.IsValidProduct(opt.SpecifiedProduct))
+            {
+                Console.WriteLine(String.Format(@"Error: Unknown product {0}", opt.SpecifiedProduct));
                 return 8;
             }
 
-            if ((opt.IsRequestList) && (opt.SelectedProd != ""))
+            ApiProxy api = new ApiProxy(opt.SpecifiedProduct, opt.SpecifiedHost, opt.SpecifiedPort);
+
+            // 再生デバイス指定があれば設定
+            if (opt.OutputDevice != "")
+            {
+                api.PlayDeviceName = opt.OutputDevice;
+            }
+
+            // 製品への接続性確認
+            if (!api.CheckConnectivity())
+            {
+                Console.WriteLine(String.Format(@"Error: Unable to connect to {0}", opt.SpecifiedProduct));
+                return 8;
+            }
+
+            // 話者一覧表示
+            if (opt.IsRequestSpeakerList)
             {
                 foreach(var item in api.AvailableCasts())
                 {
@@ -40,11 +68,7 @@ namespace voxsay
                 return 0;
             }
 
-            if (opt.OutputDevice != "")
-            {
-                api.PlayDeviceName = opt.OutputDevice;
-            }
-
+            // 発声もしくは保存処理
             if (opt.Index != null)
             {
                 SpeakerParams pm = api.GetAvatorParams((int)opt.Index);

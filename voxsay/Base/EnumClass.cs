@@ -8,7 +8,6 @@ namespace voxsay
 {
     public enum ProdnameEnum
     {
-        none,
         voicevox,
         coeiroink,
         coeiroinkv2,

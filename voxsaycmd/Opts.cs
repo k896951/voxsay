@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace voxsay
+namespace voxsaycmd
 {
     internal class Opts
     {
-        public string SelectedProd { get; private set; } = "";
+        public string SpecifiedProduct { get; private set; } = null;
+        public string SpecifiedHost { get; private set; } = null;
+        public int? SpecifiedPort { get; private set; } = null;
+
         public double? SpeedScale { get; private set; } = null;
         public double? PitchScale { get; private set; } = null;
         public double? IntonationScale { get; private set; } = null;
@@ -18,39 +21,14 @@ namespace voxsay
         public string TalkTest { get; private set; } = null;
         public string SaveFile { get; private set; } = null;
         public string OutputDevice { get; private set; } = null;
-        public bool IsRequestList { get; private set; } = false;
+        public bool IsRequestSpeakerList { get; private set; } = false;
         public bool IsRequestDevList { get; private set; } = false;
+        public bool IsRequestActiveProductList { get; private set; } = false;
         public bool IsSafe { get; private set; } = false;
-        public ProductMap ProductHostInfo
-        {
-            get
-            {
-                return ProdMap[SelectedProd];
-            }
-        }
-
-        public string ProductUrl
-        {
-            get
-            {
-                return string.Format(@"http://{0}:{1}{2}", ProductHostInfo.Hostname, ProductHostInfo.Portnumber, ProductHostInfo.Context);
-            }
-        }
-
-        Dictionary<string, ProductMap> ProdMap = new Dictionary<string, ProductMap>()
-        {
-            { "voicevox",    new ProductMap("127.0.0.1", 50021, "", ProdnameEnum.voicevox) },
-            { "coeiroink",   new ProductMap("127.0.0.1", 50031, "", ProdnameEnum.coeiroink) },
-            { "coeiroinkv2", new ProductMap("127.0.0.1", 50032, "/v1", ProdnameEnum.coeiroinkv2) },
-            { "lmroid",      new ProductMap("127.0.0.1", 50073, "", ProdnameEnum.lmroid) },
-            { "sharevox",    new ProductMap("127.0.0.1", 50025, "", ProdnameEnum.sharevox) },
-            { "itvoice",     new ProductMap("127.0.0.1", 49540, "", ProdnameEnum.itvoice) }
-        };
 
         public Opts(string[] args)
         {
             bool tonly = false;
-            string SelectedProduct = "";
             Index = 0;
 
             if (args.Length == 0)
@@ -83,21 +61,14 @@ namespace voxsay
                             break;
                         }
 
-                        SelectedProd = SelectedProduct = args[i + 1].ToLower();
+                        SpecifiedProduct = args[i + 1].ToLower();
                         i++;
-
-                        if (!ProdMap.ContainsKey(SelectedProduct))
-                        {
-                            SelectedProduct = "";
-                            IsSafe = false;
-                            Console.WriteLine(@"Error: unknown prod specification.");
-                        }
 
                         break;
 
                     case "-host":
                     case "-port":
-                        if (SelectedProduct == "")
+                        if (SpecifiedProduct == "")
                         {
                             Console.WriteLine(@"Error: -prod option not specified.");
                             IsSafe = false;
@@ -113,13 +84,13 @@ namespace voxsay
                         switch (args[i])
                         {
                             case "-host":
-                                ProdMap[SelectedProduct].Hostname = args[i + 1];
+                                SpecifiedHost = args[i + 1];
                                 break;
 
                             case "-port":
                                 if (int.TryParse(args[i + 1], out int port))
                                 {
-                                    ProdMap[SelectedProduct].Portnumber = port;
+                                    SpecifiedPort = port;
                                 }
                                 else
                                 {
@@ -133,11 +104,19 @@ namespace voxsay
                         break;
 
                     case "-list":
-                        IsRequestList = true;
+                        IsRequestSpeakerList = true;
                         break;
 
                     case "-devlist":
                         IsRequestDevList = true;
+                        IsRequestActiveProductList = false;
+                        i = args.Length;
+                        break;
+
+                    case "-prodlist":
+                        IsRequestDevList = false;
+                        IsRequestActiveProductList = true;
+                        i = args.Length;
                         break;
 
                     case "-save":
@@ -366,21 +345,20 @@ namespace voxsay
 
         private void help()
         {
-            string prods = string.Join(" | ", ProdMap.Keys.ToArray());
-
             Console.WriteLine(
                 @"
 voxsay command (c)2022,2023 by k896951
 
 command line exsamples:
     voxsay -devlist
+    voxsay -prodlist
     voxsay <-prod TTS> [-host host] [-port port] -list
     voxsay <-prod TTS> [-host host] [-port port] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
     -devlist              : List playback device.
-    -prod TTS             : Select tts product. TTS := < " + prods + " >"
-+ @"
+    -prodlist             : List available TTS products.
+    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
@@ -388,8 +366,8 @@ Options:
     -index N              : specify the speaker index.
                             Example: -index 4 -> Speak with the 4th speaker.
 
-    -samplingrate Hz      : Change audio sampling rate.
-                            Example : -samplingrate 8000 -> Change the sampling rate to 8khz.
+    -samplingrate Hz      : Change audio sampling rate. Default is 44100 (44.1kHz).
+                            Example : -samplingrate 8000 -> Change the sampling rate to 8kHz.
                             Note: Quantization bit number is 16bit only.
 
     -save FILENAME        : Save audio with specified file name.
@@ -399,12 +377,12 @@ Options:
     -outputdevice DEV     : Change playback device.
                             Example: -outputdevice ""OUT(UA-4FX)"" -> Output audio to device ""OUT(UA-4FX)""
 
-    -speed P              : specify the speedScale.
-    -pitch P              : specify the pitchScale.
-    -intonation P         : specify the intonationScale.
-    -volume P             : specify the volumeScale.
-    -prephonemelength P   : specify the prephonemelength.
-    -postphonemelength P  : specify the postphonemelength.
+    -speed P              : specify the speedScale.        Default: 1    Range:  0.5  .. 2    Step: 0.01
+    -pitch P              : specify the pitchScale.        Default: 0    Range: -0.15 .. 0.15 Step: 0.01
+    -intonation P         : specify the intonationScale.   Default: 1    Range:  0    .. 2    Step: 0.01
+    -volume P             : specify the volumeScale.       Default: 1    Range:  0    .. 2    Step: 0.01
+    -prephonemelength P   : specify the prephonemelength.  Default: 0.1  Range:  0    .. 1.5  Step: 0.01
+    -postphonemelength P  : specify the postphonemelength. Default: 0.1  Range:  0    .. 1.5  Step: 0.01
 
     -t TALKTEXT           : Text to output in tts.
                             Example : -t Hellow world! -> say ""Hello world!""

@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace voxsay
 {
     [DataContract]
-    public class Coeiroinkv2AudioQuery : AudioQuery
+    public class Coeiroinkv2AudioQuery
     {
         [DataMember]
         public string speakerUuid { get; set; }

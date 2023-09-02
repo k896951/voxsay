@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace voxsay
+﻿namespace voxsay
 {
-    public class ProductMap
+    public class ProductInfo
     {
         public string Hostname { get; set; }
 
@@ -16,7 +10,7 @@ namespace voxsay
 
         public ProdnameEnum Product { get; set; }
 
-        public ProductMap(string host, int port, string ctx, ProdnameEnum prod)
+        public ProductInfo(string host, int port, string ctx, ProdnameEnum prod)
         {
             Hostname = host;
             Portnumber = port;

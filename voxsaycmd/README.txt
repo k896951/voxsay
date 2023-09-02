@@ -1,6 +1,6 @@
 ﻿# これは何
 
-voicevox | coeiroink | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用CUIクライアント
+voicevox | coeiroink/v2 | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用CUIクライアント
 
 ### 使用方法
 
@@ -9,23 +9,27 @@ voicevox | coeiroink | lmroid | sharevox | itvoice のREST APIを呼び出して
 ```
 F:\Sandbox>voxsay
 
-voxsay command (c)2022 by k896951
+voxsay command (c)2022,2023 by k896951
 
 command line exsamples:
     voxsay -devlist
-    voxsay <-prod TTS> -list
-    voxsay <-prod TTS> <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
+    voxsay -prodlist
+    voxsay <-prod TTS> [-host host] [-port port] -list
+    voxsay <-prod TTS> [-host host] [-port port] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
     -devlist              : List playback device.
-    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | lmroid | sharevox | itvoice>
+    -prodlist             : List available TTS products.
+    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -host                 : Host name of TTS service running.
+    -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
 
     -index N              : specify the speaker index.
                             Example: -index 4 -> Speak with the 4th speaker.
 
-    -samplingrate Hz      : Change audio sampling rate.
-                            Example : -samplingrate 8000 -> Change the sampling rate to 8khz.
+    -samplingrate Hz      : Change audio sampling rate. Default is 44100 (44.1kHz).
+                            Example : -samplingrate 8000 -> Change the sampling rate to 8kHz.
                             Note: Quantization bit number is 16bit only.
 
     -save FILENAME        : Save audio with specified file name.
@@ -35,12 +39,12 @@ Options:
     -outputdevice DEV     : Change playback device.
                             Example: -outputdevice "OUT(UA-4FX)" -> Output audio to device "OUT(UA-4FX)"
 
-    -speed P              : specify the speedScale.
-    -pitch P              : specify the pitchScale.
-    -intonation P         : specify the intonationScale.
-    -volume P             : specify the volumeScale.
-    -prephonemelength P   : specify the prephonemelength.
-    -postphonemelength P  : specify the postphonemelength.
+    -speed P              : specify the speedScale.        Default: 1    Range:  0.5  .. 2    Step: 0.01
+    -pitch P              : specify the pitchScale.        Default: 0    Range: -0.15 .. 0.15 Step: 0.01
+    -intonation P         : specify the intonationScale.   Default: 1    Range:  0    .. 2    Step: 0.01
+    -volume P             : specify the volumeScale.       Default: 1    Range:  0    .. 2    Step: 0.01
+    -prephonemelength P   : specify the prephonemelength.  Default: 0.1  Range:  0    .. 1.5  Step: 0.01
+    -postphonemelength P  : specify the postphonemelength. Default: 0.1  Range:  0    .. 1.5  Step: 0.01
 
     -t TALKTEXT           : Text to output in tts.
                             Example : -t Hellow world! -> say "Hello world!"
@@ -51,41 +55,63 @@ Options:
 F:\Sandbox>
 ```
 
-製品の話者一覧でインデクスを確認します。
+ローカルで稼働している製品一覧を確認します。
 
 ```
-F:\Sandbox>voxsay -prod voicevox -list
-index: 0,  speaker:四国めたん（あまあま）
-index: 1,  speaker:ずんだもん（あまあま）
-index: 2,  speaker:四国めたん（ノーマル）
-index: 3,  speaker:ずんだもん（ノーマル）
-index: 4,  speaker:四国めたん（セクシー）
-index: 5,  speaker:ずんだもん（セクシー）
-index: 6,  speaker:四国めたん（ツンツン）
-index: 7,  speaker:ずんだもん（ツンツン）
-index: 8,  speaker:春日部つむぎ（ノーマル）
-index: 9,  speaker:波音リツ（ノーマル）
-index: 10,  speaker:雨晴はう（ノーマル）
-index: 11,  speaker:玄野武宏（ノーマル）
-index: 12,  speaker:白上虎太郎（ノーマル）
-index: 13,  speaker:青山龍星（ノーマル）
-index: 14,  speaker:冥鳴ひまり（ノーマル）
-index: 15,  speaker:九州そら（あまあま）
-index: 16,  speaker:九州そら（ノーマル）
-index: 17,  speaker:九州そら（セクシー）
-index: 18,  speaker:九州そら（ツンツン）
-index: 19,  speaker:九州そら（ささやき）
-index: 20,  speaker:もち子さん（ノーマル）
-index: 21,  speaker:剣崎雌雄（ノーマル）
-index: 22,  speaker:ずんだもん（ささやき）
+F:\Sandbox>voxsay -prodlist
+product: sharevox
+product: voicevox
+product: coeiroinkv2
 
 F:\Sandbox>
 ```
 
-ずんだもん（セクシー）に呟いてもらいます。
+SHAREVOXの話者一覧でインデクスを確認します。
 
 ```
-F:\Sandbox>voxsay -prod voicevox -index 5 -t 早く寝るのだ！
+F:\Sandbox>voxsay -prod sharevox -list
+index: 0,  speaker:小春音アミ（ノーマル）
+index: 1,  speaker:小春音アミ（喜び）
+index: 2,  speaker:小春音アミ（怒り）
+index: 3,  speaker:小春音アミ（悲しみ）
+index: 4,  speaker:つくよみちゃん（おしとやか）
+index: 5,  speaker:白痴ー/黒聡鵜月（虚偽）
+index: 6,  speaker:Yくん/開発者（ノーマル）
+index: 7,  speaker:小春音アミ（ノーマルv2）
+index: 8,  speaker:小春音アミ（喜びv2）
+index: 9,  speaker:小春音アミ（怒りv2）
+index: 10,  speaker:小春音アミ（悲しみv2）
+index: 11,  speaker:つくよみちゃん（おしとやかv2）
+index: 12,  speaker:Yくん/開発者（ノーマルv2）
+index: 13,  speaker:白痴ー/黒聡鵜月（虚偽v2）
+index: 14,  speaker:小春音アミ（ノーマルv3）
+index: 15,  speaker:小春音アミ（喜びv3）
+index: 16,  speaker:小春音アミ（怒りv3）
+index: 17,  speaker:小春音アミ（悲しみv3）
+index: 18,  speaker:つくよみちゃん（おしとやかv3）
+index: 19,  speaker:Yくん/開発者（ノーマルv3）
+index: 20,  speaker:白痴ー/黒聡鵜月（虚偽v3）
+index: 21,  speaker:らごぱすブラック（ノーマル）
+index: 22,  speaker:らごぱすホワイト（ノーマル）
+index: 23,  speaker:風花ゆき（ノーマル）
+index: 24,  speaker:安倍広葉（ノーマル）
+index: 25,  speaker:鈴乃（ノーマル）
+
+F:\Sandbox>
+```
+
+鈴乃（ノーマル）に呟いてもらいます。
+
+```
+F:\Sandbox>voxsay -prod sharevox -index 25 -t 早く寝てください！
+
+F:\Sandbox>
+```
+
+音量が大きい気がしたので下げます。
+
+```
+F:\Sandbox>voxsay -prod sharevox -index 25 -volume 0.5 -t 早く寝てください！
 
 F:\Sandbox>
 ```

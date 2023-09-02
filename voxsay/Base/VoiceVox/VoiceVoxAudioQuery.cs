@@ -3,7 +3,7 @@
 namespace voxsay
 {
     [DataContract]
-    public class VoiceVoxAudioQuery : AudioQuery
+    public class VoiceVoxAudioQuery
     {
         [DataMember]
         public VoiceVoxAccentPhrase[] accent_phrases { get; set; }

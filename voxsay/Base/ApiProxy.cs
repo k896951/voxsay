@@ -10,38 +10,203 @@ using System.Threading;
 using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace voxsay
 {
     public class ApiProxy : IDisposable
     {
-        private HttpClient client;
+        private HttpClient ConClient;
+        private string BaseUri;
+        private ProductInfo SelectedProdinfo;
 
-        private string BaseUri = @"";
+        private static HttpClient CheckClient = null;
+        private static Dictionary<ProdnameEnum, ProductInfo> ProdList = new Dictionary<ProdnameEnum, ProductInfo>()
+        {
+            { ProdnameEnum.voicevox, new ProductInfo("127.0.0.1", 50021, "", ProdnameEnum.voicevox) },
+            { ProdnameEnum.coeiroink, new ProductInfo("127.0.0.1", 50031, "", ProdnameEnum.coeiroink) },
+            { ProdnameEnum.coeiroinkv2, new ProductInfo("127.0.0.1", 50032, "/v1", ProdnameEnum.coeiroinkv2) },
+            { ProdnameEnum.lmroid, new ProductInfo("127.0.0.1", 50073, "", ProdnameEnum.lmroid) },
+            { ProdnameEnum.sharevox, new ProductInfo("127.0.0.1", 50025, "", ProdnameEnum.sharevox) },
+            { ProdnameEnum.itvoice, new ProductInfo("127.0.0.1", 49540, "", ProdnameEnum.itvoice) }
+        };
 
-        private ProdnameEnum SelectedProd = ProdnameEnum.voicevox; //デフォルトにしておく
-
+        /// <summary>
+        /// 選択されている再生デバイス
+        /// </summary>
         public string PlayDeviceName { get; set; }
 
-        public ApiProxy(ProductMap prodinfo)
+        /// <summary>
+        /// 通信用ラッパー
+        /// </summary>
+        /// <param name="prodname">接続先製品</param>
+        public ApiProxy(string prodname)
         {
             try
             {
-                client = new HttpClient();
-                BaseUri = string.Format(@"http://{0}:{1}{2}", prodinfo.Hostname, prodinfo.Portnumber, prodinfo.Context);
-                SelectedProd = prodinfo.Product;
+                var prod = (ProdnameEnum)Enum.Parse(typeof(ProdnameEnum), prodname);
+
+                SelectedProdinfo = ProdList[prod];
+
+                ApiProxySub();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("ApiProxy:{0}", e.Message);
+            }
+        }
+
+        /// <summary>
+        /// 通信用ラッパー
+        /// </summary>
+        /// <param name="prodname">接続先製品</param>
+        /// <param name="host">接続先ホスト</param>
+        /// <param name="port">接続先ポート</param>
+        public ApiProxy(string prodname, string host, int? port)
+        {
+            try
+            {
+                var prod = (ProdnameEnum)Enum.Parse(typeof(ProdnameEnum), prodname);
+
+                SelectedProdinfo = ProdList[prod];
+
+                if(host != null) SelectedProdinfo.Hostname = host;
+                if(port != null) SelectedProdinfo.Portnumber = (int)port;
+
+                ApiProxySub();
+            }
+            catch (Exception e  )
+            {
+                Console.WriteLine("ApiProxy:{0}", e.Message);
+            }
+        }
+
+        private void ApiProxySub()
+        {
+            try
+            {
+                ConClient = new HttpClient();
+                BaseUri = string.Format(@"http://{0}:{1}{2}", SelectedProdinfo.Hostname, SelectedProdinfo.Portnumber, SelectedProdinfo.Context);
             }
             catch (Exception)
             {
-                client?.Dispose();
-                client = null;
+                ConClient?.Dispose();
+                CheckClient?.Dispose();
+                ConClient = null;
+                CheckClient = null;
             }
         }
 
         public void Dispose()
         {
-            client?.Dispose();
+            ConClient?.Dispose();
+        }
+
+        /// <summary>
+        /// 正しい製品指定か？
+        /// </summary>
+        /// <param name="prodname">音声合成製品の文字列表現</param>
+        /// <returns>扱えるならTrue</returns>
+        public static bool IsValidProduct(string prodname)
+        {
+            ProdnameEnum prod;
+
+            return Enum.TryParse(prodname, out prod) && Enum.IsDefined(typeof(ProdnameEnum), prod);
+        }
+
+        /// <summary>
+        /// 再生デバイス一覧取得
+        /// </summary>
+        /// <returns>利用できる再生デバイスの一覧</returns>
+        public static List<string> GetMMDeviceList()
+        {
+            var list = new List<string>();
+
+            foreach (var item in new MMDeviceEnumerator().EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+            {
+                list.Add(item.FriendlyName);
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// 利用可能確認
+        /// </summary>
+        /// <returns>利用可能ならtrue</returns>
+        public bool CheckConnectivity()
+        {
+            bool ans = false;
+            HttpResponseMessage response = null;
+
+            if (CheckClient is null)
+            {
+                CheckClient = new HttpClient();
+            }
+
+            switch (SelectedProdinfo.Product)
+            {
+                case ProdnameEnum.coeiroinkv2:
+                default:
+
+                    Task.Run(async () => {
+                        try
+                        {
+                            response = await ConClient.GetAsync(string.Format("{0}/speakers", BaseUri));
+
+                            if (response.StatusCode == System.Net.HttpStatusCode.OK) ans = true;
+                        }
+                        catch (Exception)
+                        {
+                            ans = false;
+                        }
+
+                    }).Wait();
+                    break;
+            }
+
+            return ans;
+        }
+
+        /// <summary>
+        /// 利用可能製品一覧取得
+        /// </summary>
+        /// <returns>利用可能製品一覧</returns>
+        public static List<ProdnameEnum> ConnectivityList()
+        {
+            List<ProdnameEnum> ans = new List<ProdnameEnum>();
+            HttpResponseMessage response = null;
+            Task[] tasks = new Task[ProdList.Count];
+            int taskarrayIndex = 0;
+
+            if (CheckClient is null)
+            {
+                CheckClient = new HttpClient();
+            }
+
+            foreach (var item in ProdList)
+            {
+                tasks[taskarrayIndex] = Task.Run(async () => {
+                    try
+                    {
+                        string baseUri = string.Format(@"http://{0}:{1}{2}", item.Value.Hostname, item.Value.Portnumber, item.Value.Context);
+
+                        response = await CheckClient.GetAsync(string.Format("{0}/speakers", baseUri));
+
+                        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                        {
+                            ans.Add(item.Value.Product);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        //
+                    }
+                });
+                taskarrayIndex++;
+            }
+
+            Task.WaitAll(tasks);
+
+            return ans;
         }
 
         /// <summary>
@@ -52,32 +217,33 @@ namespace voxsay
         public SpeakerParams GetAvatorParams(int speaker)
         {
             SpeakerParams ans;
-
-            if (SelectedProd == ProdnameEnum.coeiroinkv2)
+            switch(SelectedProdinfo.Product)
             {
                 // 各種パラメタ値の取得が出来そうなAPIが見つけられなかったので、GUIに設定されていた設定値デフォルトとして適用する
-                ans = new Coeiroinkv2Params();
+                case ProdnameEnum.coeiroinkv2:
+                    ans = new Coeiroinkv2Params();
 
-                ans.intonationScale = 1.0;     // Range:  0    .. 2
-                ans.pitchScale = 0.0;          // Range: -0.15 .. 0.15
-                ans.speedScale = 1.0;          // Range:  0.5  .. 2
-                ans.volumeScale = 1.0;         // Range:  0    .. 2
-                ans.prePhonemeLength = 0.1;    // Range:  0    .. 1.5
-                ans.postPhonemeLength = 0.1;   // Range:  0    .. 1.5
-                ans.outputSamplingRate = 44100;
-            }
-            else
-            {
+                    ans.intonationScale = 1.0;     // Range:  0    .. 2
+                    ans.pitchScale = 0.0;          // Range: -0.15 .. 0.15
+                    ans.speedScale = 1.0;          // Range:  0.5  .. 2
+                    ans.volumeScale = 1.0;         // Range:  0    .. 2
+                    ans.prePhonemeLength = 0.1;    // Range:  0    .. 1.5
+                    ans.postPhonemeLength = 0.1;   // Range:  0    .. 1.5
+                    ans.outputSamplingRate = 44100;
+                    break;
+
                 // 面倒なのでVOICEVOXのデフォルト値を適用する。
-                ans = new VoiceVoxParams();
+                default:
+                    ans = new VoiceVoxParams();
 
-                ans.intonationScale = 1.0;     // Range:  0    .. 2
-                ans.pitchScale = 0.0;          // Range: -0.15 .. 0.15
-                ans.speedScale = 1.0;          // Range:  0.5  .. 2
-                ans.volumeScale = 1.0;         // Range:  0    .. 2
-                ans.prePhonemeLength = 0.1;    // Range:  0    .. 1.5
-                ans.postPhonemeLength = 0.1;   // Range:  0    .. 1.5
-                ans.outputSamplingRate = 44100;
+                    ans.intonationScale = 1.0;     // Range:  0    .. 2
+                    ans.pitchScale = 0.0;          // Range: -0.15 .. 0.15
+                    ans.speedScale = 1.0;          // Range:  0.5  .. 2
+                    ans.volumeScale = 1.0;         // Range:  0    .. 2
+                    ans.prePhonemeLength = 0.1;    // Range:  0    .. 1.5
+                    ans.postPhonemeLength = 0.1;   // Range:  0    .. 1.5
+                    ans.outputSamplingRate = 44100;
+                    break;
             }
 
             return ans;
@@ -89,7 +255,7 @@ namespace voxsay
         /// <returns>話者番号と名称の組み合わせのリスト</returns>
         public List<KeyValuePair<int, string>> AvailableCasts()
         {
-            switch(SelectedProd)
+            switch(SelectedProdinfo.Product)
             {
                 case ProdnameEnum.coeiroinkv2:
                     return Coeiroinkv2AvailableCasts();
@@ -108,7 +274,7 @@ namespace voxsay
         /// <param name="WavFilePath">保存するファイル名</param>
         public bool Save(int speaker, SpeakerParams param, string text, string WavFilePath)
         {
-            switch(SelectedProd)
+            switch(SelectedProdinfo.Product)
             {
                 case ProdnameEnum.coeiroinkv2:
                     var coeiroinkv2aq = GetCoeiroinkv2AudioQuery(text, speaker);
@@ -154,7 +320,7 @@ namespace voxsay
         {
             bool ans = false;
 
-            switch (SelectedProd)
+            switch (SelectedProdinfo.Product)
             {
                 case ProdnameEnum.coeiroinkv2:
                     var coeiroinkv2aq = GetCoeiroinkv2AudioQuery(text, speaker);
@@ -194,45 +360,12 @@ namespace voxsay
             return ans;
         }
 
-        /// <summary>
-        /// 利用可能確認
-        /// </summary>
-        /// <returns>利用可能ならtrue</returns>
-        public bool CheckConnectivity()
-        {
-            bool ans = false;
-            HttpResponseMessage response = null;
-
-            switch(SelectedProd)
-            {
-                case ProdnameEnum.coeiroinkv2:
-                default:
-
-                    Task.Run(async () => {
-                        try
-                        {
-                            response = await client.GetAsync(string.Format("{0}/speakers", BaseUri));
-
-                            if (response.StatusCode == System.Net.HttpStatusCode.OK) ans = true;
-                        }
-                        catch (Exception)
-                        {
-                            ans = false;
-                        }
-
-                    }).Wait();
-                    break;
-            }
-
-            return ans;
-        }
-
         private void SettingJsonHeader()
         {
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/wav"));
-            client.DefaultRequestHeaders.Add("User-Agent", "AssistantSeika Driver");
+            ConClient.DefaultRequestHeaders.Accept.Clear();
+            ConClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            ConClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/wav"));
+            ConClient.DefaultRequestHeaders.Add("User-Agent", "AssistantSeika Driver");
         }
 
         private bool PostVoiceVoxSynthesisQuery(VoiceVoxAudioQuery aq, int speaker, string saveFileName)
@@ -251,7 +384,7 @@ namespace voxsay
 
                 try
                 {
-                    var response = await client.PostAsync(string.Format(@"{0}/synthesis?speaker={1}", BaseUri, speaker), content);
+                    var response = await ConClient.PostAsync(string.Format(@"{0}/synthesis?speaker={1}", BaseUri, speaker), content);
 
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
@@ -296,7 +429,7 @@ namespace voxsay
 
                 try
                 {
-                    var response = await client.PostAsync(string.Format(@"{0}/synthesis", BaseUri), content);
+                    var response = await ConClient.PostAsync(string.Format(@"{0}/synthesis", BaseUri), content);
 
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
@@ -339,7 +472,7 @@ namespace voxsay
 
                 try
                 {
-                    var response = await client.PostAsync(url, content);
+                    var response = await ConClient.PostAsync(url, content);
 
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
@@ -379,7 +512,7 @@ namespace voxsay
 
                 try
                 {
-                    var response1 = await client.PostAsync(url_getspeakerinfo, content_speaker);
+                    var response1 = await ConClient.PostAsync(url_getspeakerinfo, content_speaker);
 
                     if (response1.StatusCode == System.Net.HttpStatusCode.OK)
                     {
@@ -390,7 +523,7 @@ namespace voxsay
                         ans.styleId = speakerinfo.styleId;
                     }
 
-                    var response2 = await client.PostAsync(url_estimateprosody, content_estimateprosody);
+                    var response2 = await ConClient.PostAsync(url_estimateprosody, content_estimateprosody);
 
                     if (response2.StatusCode == System.Net.HttpStatusCode.OK)
                     {
@@ -422,7 +555,7 @@ namespace voxsay
 
                 try
                 {
-                    var response = await client.GetAsync(string.Format("{0}/speakers", BaseUri));
+                    var response = await ConClient.GetAsync(string.Format("{0}/speakers", BaseUri));
 
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
@@ -456,7 +589,7 @@ namespace voxsay
 
                 try
                 {
-                    var response = await client.GetAsync(string.Format("{0}/speakers", BaseUri));
+                    var response = await ConClient.GetAsync(string.Format("{0}/speakers", BaseUri));
 
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
@@ -533,18 +666,6 @@ namespace voxsay
 
             return mmCapDev;
         }
-
-        public static List<MMDevice> GetMMDeviceList()
-        {
-            List<MMDevice> list = new List<MMDevice>();
-
-            foreach (var item in new MMDeviceEnumerator().EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
-            {
-                list.Add(item);
-            }
-            return list;
-        }
-
 
     }
 
