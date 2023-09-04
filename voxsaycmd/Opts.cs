@@ -357,8 +357,8 @@ command line exsamples:
 
 Options:
     -devlist              : List playback device.
-    -prodlist             : List available TTS products.
-    -prod TTS             : Select tts product. TTS := <voicevox | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -prodlist             : List available local TTS products.
+    -prod TTS             : Select tts product. TTS := <sapi | voicevox | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
@@ -378,9 +378,11 @@ Options:
                             Example: -outputdevice ""OUT(UA-4FX)"" -> Output audio to device ""OUT(UA-4FX)""
 
     -speed P              : specify the speedScale.        Default: 1    Range:  0.5  .. 2    Step: 0.01
+                                                           Default: 100  Range:  0    .. 100  Step: 1.00 * sapi 
     -pitch P              : specify the pitchScale.        Default: 0    Range: -0.15 .. 0.15 Step: 0.01
     -intonation P         : specify the intonationScale.   Default: 1    Range:  0    .. 2    Step: 0.01
     -volume P             : specify the volumeScale.       Default: 1    Range:  0    .. 2    Step: 0.01
+                                                           Default: 0    Range: -10   .. 10   Step: 1.00 * sapi
     -prephonemelength P   : specify the prephonemelength.  Default: 0.1  Range:  0    .. 1.5  Step: 0.01
     -postphonemelength P  : specify the postphonemelength. Default: 0.1  Range:  0    .. 1.5  Step: 0.01
 
@@ -389,6 +391,9 @@ Options:
 
         * Anything specified after -t is treated as tts text.
         * Please refer to the value of the editor for each product for the range of P.
+
+Note:
+    If TTS is ""sapi"", only the following options are valid: -list, -save, -outputdevice, -speed, -volume, -t 
 "
             );
         }

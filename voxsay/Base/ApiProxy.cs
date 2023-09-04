@@ -19,8 +19,8 @@ namespace voxsay
         private HttpClient ConClient;
         private string BaseUri;
         private ProductInfo SelectedProdinfo;
+        private Dictionary<int, SpObjectToken> SapiSpeakerList = null;
 
-        private static Dictionary<int, SpObjectToken> SapiSpeakerList = null;
         private static SpVoice Sapi = new SpVoice();
         private static SpObjectTokenCategory SapiCat = new SpObjectTokenCategory();
 
@@ -33,7 +33,7 @@ namespace voxsay
             { ProdnameEnum.lmroid, new ProductInfo("127.0.0.1", 50073, "", ProdnameEnum.lmroid) },
             { ProdnameEnum.sharevox, new ProductInfo("127.0.0.1", 50025, "", ProdnameEnum.sharevox) },
             { ProdnameEnum.itvoice, new ProductInfo("127.0.0.1", 49540, "", ProdnameEnum.itvoice) },
-            { ProdnameEnum.sapi, new ProductInfo("127.0.0.1", 00000, "", ProdnameEnum.sapi) }
+            { ProdnameEnum.sapi, new ProductInfo("0.0.0.0", 00000, "", ProdnameEnum.sapi) }
         };
 
         /// <summary>
@@ -60,11 +60,9 @@ namespace voxsay
                 else
                 {
                     SelectedProdinfo = ProdList[prod];
-                    if(SapiSpeakerList is null)
-                    {
-                        SapiSpeakerList = new Dictionary<int, SpObjectToken>();
-                        SapiAvailableCasts();
-                    }
+                    SapiSpeakerList = GetSapiTakerObjects();
+                    ConClient = null;
+                    BaseUri = "";
                 }
             }
             catch (Exception e)
@@ -97,12 +95,9 @@ namespace voxsay
                 else
                 {
                     SelectedProdinfo = ProdList[prod];
-
-                    if (SapiSpeakerList is null)
-                    {
-                        SapiSpeakerList = new Dictionary<int, SpObjectToken>();
-                        SapiAvailableCasts();
-                    }
+                    SapiSpeakerList = GetSapiTakerObjects();
+                    ConClient = null;
+                    BaseUri = "";
                 }
             }
             catch (Exception e  )
@@ -427,6 +422,7 @@ namespace voxsay
             switch (SelectedProdinfo.Product)
             {
                 case ProdnameEnum.sapi:
+                    AsyncSynthesisSapi(speaker, param, text);
                     break;
 
                 case ProdnameEnum.coeiroinkv2:
@@ -567,6 +563,11 @@ namespace voxsay
         private bool SynthesisSapi(int speaker, SpeakerParams param, string text, string saveFileName)
         {
             bool ans = false;
+
+            if (SapiSpeakerList.Count == 0)
+            {
+                SapiAvailableCasts();
+            }
 
             Task.Run(() => {
 
@@ -881,37 +882,65 @@ namespace voxsay
             return ans;
         }
 
+        private Dictionary<int, SpObjectToken> GetSapiTakerObjects()
+        {
+            var ans = new Dictionary<int, SpObjectToken>();
+
+            try
+            {
+                ans.Clear();
+                SapiCat.SetId(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices", false);
+
+                int idx = 0;
+                foreach (SpObjectToken token in SapiCat.EnumerateTokens())
+                {
+                    ans.Add(idx, token);
+                    idx++;
+                }
+                foreach (SpObjectToken token in Sapi.GetVoices("", ""))
+                {
+                    if (!ans.ContainsValue(token))
+                    {
+                        ans.Add(idx, token);
+                        idx++;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("GetSapiTakerObjects:{0}", e.Message);
+                ans = null;
+            }
+
+            return ans;
+        }
+
         private List<KeyValuePair<int, string>> SapiAvailableCasts()
         {
             var ans = new List<KeyValuePair<int, string>>();
-            SapiCat.SetId(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices", false);
 
-            Task.Run( () => {
-                try
+            try
+            {
+                int idx = 0;
+                foreach (SpObjectToken token in SapiCat.EnumerateTokens())
                 {
-                    int idx = 0;
-                    foreach (SpObjectToken token in SapiCat.EnumerateTokens())
+                    ans.Add(new KeyValuePair<int, string>(idx, token.GetDescription()));
+                    idx++;
+                }
+                foreach (SpObjectToken token in Sapi.GetVoices("", ""))
+                {
+                    if (!SapiSpeakerList.ContainsValue(token))
                     {
                         ans.Add(new KeyValuePair<int, string>(idx, token.GetDescription()));
-                        SapiSpeakerList.Add(idx, token);
                         idx++;
                     }
-                    foreach (SpObjectToken token in Sapi.GetVoices("", ""))
-                    {
-                        if (!SapiSpeakerList.ContainsValue(token))
-                        {
-                            ans.Add(new KeyValuePair<int, string>(idx, token.GetDescription()));
-                            SapiSpeakerList.Add(idx, token);
-                            idx++;
-                        }
-                    }
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine("SapiAvailableCasts:{0}", e.Message);
-                    ans = null;
-                }
-            }).Wait();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("SapiAvailableCasts:{0}", e.Message);
+                ans = null;
+            }
 
             return ans;
         }
