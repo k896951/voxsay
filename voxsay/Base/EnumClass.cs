@@ -13,6 +13,7 @@ namespace voxsay
         coeiroinkv2,
         lmroid,
         sharevox,
-        itvoice
+        itvoice,
+        sapi
     }
 }

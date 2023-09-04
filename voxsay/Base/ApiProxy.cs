@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using SpeechLib;
 
 namespace voxsay
 {
@@ -19,6 +20,10 @@ namespace voxsay
         private string BaseUri;
         private ProductInfo SelectedProdinfo;
 
+        private static Dictionary<int, SpObjectToken> SapiSpeakerList = null;
+        private static SpVoice Sapi = new SpVoice();
+        private static SpObjectTokenCategory SapiCat = new SpObjectTokenCategory();
+
         private static HttpClient CheckClient = null;
         private static Dictionary<ProdnameEnum, ProductInfo> ProdList = new Dictionary<ProdnameEnum, ProductInfo>()
         {
@@ -27,7 +32,8 @@ namespace voxsay
             { ProdnameEnum.coeiroinkv2, new ProductInfo("127.0.0.1", 50032, "/v1", ProdnameEnum.coeiroinkv2) },
             { ProdnameEnum.lmroid, new ProductInfo("127.0.0.1", 50073, "", ProdnameEnum.lmroid) },
             { ProdnameEnum.sharevox, new ProductInfo("127.0.0.1", 50025, "", ProdnameEnum.sharevox) },
-            { ProdnameEnum.itvoice, new ProductInfo("127.0.0.1", 49540, "", ProdnameEnum.itvoice) }
+            { ProdnameEnum.itvoice, new ProductInfo("127.0.0.1", 49540, "", ProdnameEnum.itvoice) },
+            { ProdnameEnum.sapi, new ProductInfo("127.0.0.1", 00000, "", ProdnameEnum.sapi) }
         };
 
         /// <summary>
@@ -45,9 +51,21 @@ namespace voxsay
             {
                 var prod = (ProdnameEnum)Enum.Parse(typeof(ProdnameEnum), prodname);
 
-                SelectedProdinfo = ProdList[prod];
+                if(prod != ProdnameEnum.sapi) // SAPI以外の時
+                {
+                    SelectedProdinfo = ProdList[prod];
 
-                ApiProxySub();
+                    ApiProxySub();
+                }
+                else
+                {
+                    SelectedProdinfo = ProdList[prod];
+                    if(SapiSpeakerList is null)
+                    {
+                        SapiSpeakerList = new Dictionary<int, SpObjectToken>();
+                        SapiAvailableCasts();
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -67,12 +85,25 @@ namespace voxsay
             {
                 var prod = (ProdnameEnum)Enum.Parse(typeof(ProdnameEnum), prodname);
 
-                SelectedProdinfo = ProdList[prod];
+                if (prod != ProdnameEnum.sapi) // SAPI以外の時
+                {
+                    SelectedProdinfo = ProdList[prod];
 
-                if(host != null) SelectedProdinfo.Hostname = host;
-                if(port != null) SelectedProdinfo.Portnumber = (int)port;
+                    if (host != null) SelectedProdinfo.Hostname = host;
+                    if (port != null) SelectedProdinfo.Portnumber = (int)port;
 
-                ApiProxySub();
+                    ApiProxySub();
+                }
+                else
+                {
+                    SelectedProdinfo = ProdList[prod];
+
+                    if (SapiSpeakerList is null)
+                    {
+                        SapiSpeakerList = new Dictionary<int, SpObjectToken>();
+                        SapiAvailableCasts();
+                    }
+                }
             }
             catch (Exception e  )
             {
@@ -144,6 +175,10 @@ namespace voxsay
 
             switch (SelectedProdinfo.Product)
             {
+                case ProdnameEnum.sapi:
+                    ans = true;    // 固定で使えることにする
+                    break;
+
                 case ProdnameEnum.coeiroinkv2:
                 default:
 
@@ -174,7 +209,7 @@ namespace voxsay
         {
             List<ProdnameEnum> ans = new List<ProdnameEnum>();
             HttpResponseMessage response = null;
-            Task[] tasks = new Task[ProdList.Count];
+            Task[] tasks = new Task[ProdList.Count - 1]; // SAPI分を引いておく
             int taskarrayIndex = 0;
 
             if (CheckClient is null)
@@ -184,24 +219,34 @@ namespace voxsay
 
             foreach (var item in ProdList)
             {
-                tasks[taskarrayIndex] = Task.Run(async () => {
-                    try
-                    {
-                        string baseUri = string.Format(@"http://{0}:{1}{2}", item.Value.Hostname, item.Value.Portnumber, item.Value.Context);
+                switch(item.Key)
+                {
+                    case ProdnameEnum.sapi:
+                        ans.Add(item.Value.Product); // 固定で使えることにする
+                        break;
 
-                        response = await CheckClient.GetAsync(string.Format("{0}/speakers", baseUri));
+                    case ProdnameEnum.coeiroinkv2:
+                    default:
+                        tasks[taskarrayIndex] = Task.Run(async () => {
+                            try
+                            {
+                                string baseUri = string.Format(@"http://{0}:{1}{2}", item.Value.Hostname, item.Value.Portnumber, item.Value.Context);
 
-                        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            ans.Add(item.Value.Product);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        //
-                    }
-                });
-                taskarrayIndex++;
+                                response = await CheckClient.GetAsync(string.Format("{0}/speakers", baseUri));
+
+                                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                                {
+                                    ans.Add(item.Value.Product);
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                //
+                            }
+                        });
+                        taskarrayIndex++;
+                        break;
+                }
             }
 
             Task.WaitAll(tasks);
@@ -219,6 +264,14 @@ namespace voxsay
             SpeakerParams ans;
             switch(SelectedProdinfo.Product)
             {
+                // SAPI初期値
+                case ProdnameEnum.sapi:
+                    ans = new SapiParams();
+
+                    ans.speedScale = 0.0;          // Range: -10.0  ..  10.0 step 1.0
+                    ans.volumeScale = 100.0;       // Range:   0.0  .. 100.0 step 1.0
+                    break;
+
                 // 各種パラメタ値の取得が出来そうなAPIが見つけられなかったので、GUIに設定されていた設定値デフォルトとして適用する
                 case ProdnameEnum.coeiroinkv2:
                     ans = new Coeiroinkv2Params();
@@ -257,6 +310,9 @@ namespace voxsay
         {
             switch(SelectedProdinfo.Product)
             {
+                case ProdnameEnum.sapi:
+                    return SapiAvailableCasts();
+
                 case ProdnameEnum.coeiroinkv2:
                     return Coeiroinkv2AvailableCasts();
 
@@ -276,6 +332,9 @@ namespace voxsay
         {
             switch(SelectedProdinfo.Product)
             {
+                case ProdnameEnum.sapi:
+                    return SynthesisSapi(speaker, param, text, WavFilePath);
+
                 case ProdnameEnum.coeiroinkv2:
                     var coeiroinkv2aq = GetCoeiroinkv2AudioQuery(text, speaker);
 
@@ -318,10 +377,11 @@ namespace voxsay
         /// <param name="text">発声させるテキスト</param>
         public bool Speak(int speaker, SpeakerParams param, string text)
         {
-            bool ans = false;
-
             switch (SelectedProdinfo.Product)
             {
+                case ProdnameEnum.sapi:
+                    return SynthesisSapi(speaker, param, text, "");
+
                 case ProdnameEnum.coeiroinkv2:
                     var coeiroinkv2aq = GetCoeiroinkv2AudioQuery(text, speaker);
 
@@ -336,7 +396,54 @@ namespace voxsay
                         coeiroinkv2aq.outputSamplingRate = param.outputSamplingRate;
                     }
 
-                    PostCoeiroinkv2SynthesisQuery(coeiroinkv2aq, speaker, "");
+                    return PostCoeiroinkv2SynthesisQuery(coeiroinkv2aq, speaker, "");
+
+                default:
+                    var voicevoxaq = GetVoiceVoxAudioQuery(text, speaker);
+
+                    if ((voicevoxaq != null) && (param != null))
+                    {
+                        voicevoxaq.volumeScale = param.volumeScale;
+                        voicevoxaq.intonationScale = param.intonationScale;
+                        voicevoxaq.pitchScale = param.pitchScale;
+                        voicevoxaq.speedScale = param.speedScale;
+                        voicevoxaq.prePhonemeLength = param.prePhonemeLength;
+                        voicevoxaq.postPhonemeLength = param.postPhonemeLength;
+                        voicevoxaq.outputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    return PostVoiceVoxSynthesisQuery(voicevoxaq, speaker, "");
+            }
+        }
+
+        /// <summary>
+        /// 非同期発声
+        /// </summary>
+        /// <param name="speaker">話者番号（StyleId）</param>
+        /// <param name="param">エフェクト</param>
+        /// <param name="text">発声させるテキスト</param>
+        public void AsyncSpeak(int speaker, SpeakerParams param, string text)
+        {
+            switch (SelectedProdinfo.Product)
+            {
+                case ProdnameEnum.sapi:
+                    break;
+
+                case ProdnameEnum.coeiroinkv2:
+                    var coeiroinkv2aq = GetCoeiroinkv2AudioQuery(text, speaker);
+
+                    if ((coeiroinkv2aq != null) && (param != null))
+                    {
+                        coeiroinkv2aq.volumeScale = param.volumeScale;
+                        coeiroinkv2aq.intonationScale = param.intonationScale;
+                        coeiroinkv2aq.pitchScale = param.pitchScale;
+                        coeiroinkv2aq.speedScale = param.speedScale;
+                        coeiroinkv2aq.prePhonemeLength = param.prePhonemeLength;
+                        coeiroinkv2aq.postPhonemeLength = param.postPhonemeLength;
+                        coeiroinkv2aq.outputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    AsyncPostCoeiroinkv2SynthesisQuery(coeiroinkv2aq, speaker);
                     break;
 
                 default:
@@ -353,11 +460,10 @@ namespace voxsay
                         voicevoxaq.outputSamplingRate = param.outputSamplingRate;
                     }
 
-                    PostVoiceVoxSynthesisQuery(voicevoxaq, speaker, "");
+                    AsyncPostVoiceVoxSynthesisQuery(voicevoxaq, speaker);
                     break;
             }
 
-            return ans;
         }
 
         private void SettingJsonHeader()
@@ -456,6 +562,169 @@ namespace voxsay
             }).Wait();
 
             return ans;
+        }
+
+        private bool SynthesisSapi(int speaker, SpeakerParams param, string text, string saveFileName)
+        {
+            bool ans = false;
+
+            Task.Run(() => {
+
+                try
+                {
+                    var backupSapi = Sapi.Voice;
+
+                    Sapi.Voice = SapiSpeakerList[speaker];
+
+                    SpFileStream ss = new SpFileStream();
+                    string tempFileName = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
+
+                    ss.Open(tempFileName, SpeechStreamFileMode.SSFMCreateForWrite);
+                    Sapi.AudioOutputStream = ss;
+
+                    Sapi.Volume = Convert.ToInt32(param.volumeScale);
+                    Sapi.Rate = Convert.ToInt32(param.speedScale);
+
+                    Thread t = new Thread(() => {
+                        Sapi.Speak(text, SpeechVoiceSpeakFlags.SVSFIsXML);
+                    });
+                    t.SetApartmentState(ApartmentState.STA);
+                    t.Start();
+                    t.Join();
+                    ss.Close();
+
+                    Sapi.Voice = backupSapi;
+
+                    if (saveFileName == "")
+                    {
+                        PlayWaveFile(tempFileName);
+                        File.Delete(tempFileName);
+                    }
+
+                    ans = true;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("SynthesisSapi:{0}", e.Message);
+                }
+            }).Wait();
+
+            return ans;
+        }
+
+        private void AsyncPostVoiceVoxSynthesisQuery(VoiceVoxAudioQuery aq, int speaker)
+        {
+            var json = new DataContractJsonSerializer(typeof(VoiceVoxAudioQuery));
+            MemoryStream ms = new MemoryStream();
+
+            json.WriteObject(ms, aq);
+
+            var content = new StringContent(Encoding.UTF8.GetString(ms.ToArray()), Encoding.UTF8, "application/json");
+
+            Task.Run(async () => {
+
+                SettingJsonHeader();
+
+                try
+                {
+                    var response = await ConClient.PostAsync(string.Format(@"{0}/synthesis?speaker={1}", BaseUri, speaker), content);
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string tempFileName = Path.GetTempFileName();
+
+                        using (FileStream tempfile = new FileStream(tempFileName, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await response.Content.CopyToAsync(tempfile);
+                        }
+
+                        PlayWaveFile(tempFileName);
+                        File.Delete(tempFileName);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("AsyncPostVoiceVoxSynthesisQuery:{0}", e.Message);
+                }
+            });
+
+        }
+
+        private void AsyncPostCoeiroinkv2SynthesisQuery(Coeiroinkv2AudioQuery aq, int speaker)
+        {
+            var json = new DataContractJsonSerializer(typeof(Coeiroinkv2AudioQuery));
+            MemoryStream ms = new MemoryStream();
+
+            json.WriteObject(ms, aq);
+
+            var content = new StringContent(Encoding.UTF8.GetString(ms.ToArray()), Encoding.UTF8, "application/json");
+
+            Task.Run(async () => {
+
+                SettingJsonHeader();
+
+                try
+                {
+                    var response = await ConClient.PostAsync(string.Format(@"{0}/synthesis", BaseUri), content);
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string tempFileName = Path.GetTempFileName();
+
+                        using (FileStream tempfile = new FileStream(tempFileName, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await response.Content.CopyToAsync(tempfile);
+                        }
+
+                        PlayWaveFile(tempFileName);
+                        File.Delete(tempFileName);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("AsyncPostCoeiroinkv2SynthesisQuery:{0}", e.Message);
+                }
+            });
+
+        }
+
+        private void AsyncSynthesisSapi(int speaker, SpeakerParams param, string text)
+        {
+            Task.Run(() => {
+
+                try
+                {
+                    var backupSapi = Sapi.Voice;
+
+                    Sapi.Voice = SapiSpeakerList[speaker];
+
+                    SpFileStream ss = new SpFileStream();
+                    string tempFileName = Path.GetTempFileName();
+
+                    ss.Open(tempFileName, SpeechStreamFileMode.SSFMCreateForWrite);
+                    Sapi.AudioOutputStream = ss;
+
+                    Sapi.Volume = Convert.ToInt32(param.volumeScale);
+                    Sapi.Rate = Convert.ToInt32(param.speedScale);
+
+                    Thread t = new Thread(() => {
+                        Sapi.Speak(text, SpeechVoiceSpeakFlags.SVSFIsXML);
+                    });
+                    t.SetApartmentState(ApartmentState.STA);
+                    t.Start();
+                    t.Join();
+                    ss.Close();
+
+                    Sapi.Voice = backupSapi;
+
+                    PlayWaveFile(tempFileName);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("SynthesisSapi:{0}", e.Message);
+                }
+            });
+
         }
 
         private VoiceVoxAudioQuery GetVoiceVoxAudioQuery(string text, int speaker)
@@ -570,7 +839,7 @@ namespace voxsay
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("AvailableCasts:{0}", e.Message);
+                    Console.WriteLine("VoiceVoxAvailableCasts:{0}", e.Message);
                     ans = null;
                 }
             }).Wait();
@@ -604,7 +873,42 @@ namespace voxsay
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("AvailableCasts:{0}", e.Message);
+                    Console.WriteLine("Coeiroinkv2AvailableCasts:{0}", e.Message);
+                    ans = null;
+                }
+            }).Wait();
+
+            return ans;
+        }
+
+        private List<KeyValuePair<int, string>> SapiAvailableCasts()
+        {
+            var ans = new List<KeyValuePair<int, string>>();
+            SapiCat.SetId(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices", false);
+
+            Task.Run( () => {
+                try
+                {
+                    int idx = 0;
+                    foreach (SpObjectToken token in SapiCat.EnumerateTokens())
+                    {
+                        ans.Add(new KeyValuePair<int, string>(idx, token.GetDescription()));
+                        SapiSpeakerList.Add(idx, token);
+                        idx++;
+                    }
+                    foreach (SpObjectToken token in Sapi.GetVoices("", ""))
+                    {
+                        if (!SapiSpeakerList.ContainsValue(token))
+                        {
+                            ans.Add(new KeyValuePair<int, string>(idx, token.GetDescription()));
+                            SapiSpeakerList.Add(idx, token);
+                            idx++;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("SapiAvailableCasts:{0}", e.Message);
                     ans = null;
                 }
             }).Wait();
