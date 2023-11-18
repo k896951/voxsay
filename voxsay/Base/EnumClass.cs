@@ -14,6 +14,7 @@ namespace voxsay
         lmroid,
         sharevox,
         itvoice,
-        sapi
+        sapi,
+        voicevoxnemo,
     }
 }

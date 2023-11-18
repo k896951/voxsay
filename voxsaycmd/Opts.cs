@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Json;
 
 namespace voxsaycmd
 {
@@ -18,13 +20,15 @@ namespace voxsaycmd
         public double? PostPhonemeLength { get; private set; } = null;
         public int? OutputSamplingRate { get; set; } = null;
         public int? Index { get; private set; } = null;
-        public string TalkTest { get; private set; } = null;
+        public string TalkText { get; private set; } = null;
         public string SaveFile { get; private set; } = null;
         public string OutputDevice { get; private set; } = null;
         public bool IsRequestSpeakerList { get; private set; } = false;
         public bool IsRequestDevList { get; private set; } = false;
         public bool IsRequestActiveProductList { get; private set; } = false;
         public bool IsSafe { get; private set; } = false;
+
+        private string ConfFileNamee = @".\voxsayconf.json";
 
         public Opts(string[] args)
         {
@@ -37,13 +41,15 @@ namespace voxsaycmd
                 return;
             }
 
+            ConfigLoad();
+
             IsSafe = true;
 
             for(int i=0; i<args.Length; i++)
             {
                 if(tonly)
                 {
-                    TalkTest = TalkTest + args[i];
+                    TalkText = TalkText + args[i];
                     continue;
                 }
 
@@ -343,6 +349,47 @@ namespace voxsaycmd
 
         }
 
+        private void ConfigLoad()
+        {
+            if (File.Exists(ConfFileNamee))
+            {
+                DataContractJsonSerializer js = new DataContractJsonSerializer(typeof(UserConfig));
+                UserConfig json = null;
+
+                try
+                {
+                    FileStream fs = new FileStream(ConfFileNamee, FileMode.Open);
+
+                    json = (UserConfig)js.ReadObject(fs);
+                    fs.Close();
+                }
+                catch(FileNotFoundException)
+                {
+                    //
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+                if (json != null)
+                {
+                    SpecifiedProduct = json.SpecifiedProduct;
+                    SpecifiedHost = json.SpecifiedHost;
+                    SpecifiedPort = json.SpecifiedPort;
+                    SpeedScale = json.SpeedScale;
+                    PitchScale = json.PitchScale;
+                    IntonationScale = json.IntonationScale;
+                    VolumeScale = json.VolumeScale;
+                    PrePhonemeLength = json.PrePhonemeLength;
+                    PostPhonemeLength = json.PostPhonemeLength;
+                    OutputSamplingRate = json.OutputSamplingRate;
+                    Index = json.Index;
+                    OutputDevice = json.OutputDevice;
+                }
+            }
+        }
+
         private void help()
         {
             Console.WriteLine(
@@ -358,7 +405,8 @@ command line exsamples:
 Options:
     -devlist              : List playback device.
     -prodlist             : List available local TTS products.
-    -prod TTS             : Select tts product. TTS := <sapi | voicevox | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -prod TTS             : Select tts product.
+                              TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.

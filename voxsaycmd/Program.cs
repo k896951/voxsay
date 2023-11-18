@@ -87,11 +87,11 @@ namespace voxsaycmd
 
                     if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
 
-                    if (!api.Save((int)opt.Index, pm, opt.TalkTest, f)) rcd = 8;
+                    if (!api.Save((int)opt.Index, pm, opt.TalkText, f)) rcd = 8;
                 }
                 else
                 {
-                    if (!api.Speak((int)opt.Index, pm, opt.TalkTest)) rcd = 8;
+                    if (!api.Speak((int)opt.Index, pm, opt.TalkText)) rcd = 8;
                 }
             }
 

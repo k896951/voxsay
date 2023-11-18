@@ -28,6 +28,7 @@ namespace voxsay
         private static Dictionary<ProdnameEnum, ProductInfo> ProdList = new Dictionary<ProdnameEnum, ProductInfo>()
         {
             { ProdnameEnum.voicevox, new ProductInfo("127.0.0.1", 50021, "", ProdnameEnum.voicevox) },
+            { ProdnameEnum.voicevoxnemo, new ProductInfo("127.0.0.1", 50121, "", ProdnameEnum.voicevoxnemo) },
             { ProdnameEnum.coeiroink, new ProductInfo("127.0.0.1", 50031, "", ProdnameEnum.coeiroink) },
             { ProdnameEnum.coeiroinkv2, new ProductInfo("127.0.0.1", 50032, "/v1", ProdnameEnum.coeiroinkv2) },
             { ProdnameEnum.lmroid, new ProductInfo("127.0.0.1", 50073, "", ProdnameEnum.lmroid) },
