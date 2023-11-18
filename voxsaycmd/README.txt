@@ -20,7 +20,8 @@ command line exsamples:
 Options:
     -devlist              : List playback device.
     -prodlist             : List available local TTS products.
-    -prod TTS             : Select tts product. TTS := <sapi | voicevox | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -prod TTS             : Select tts product.
+                              TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
@@ -123,6 +124,23 @@ F:\Sandbox>
 ```
 
 あとは各自オプションを試してください。
+
+### 定義ファイル
+
+オプションのいくつかは、voxsay.exeと同じフォルダに作成したJSONファイル voxsayconf.json で省略できます。
+```
+{
+	"prod":"voicevoxnemo",
+	"index":10003,
+	"speed":1.5,
+	"outputdevice":"EX-LDGC242HT (NVIDIA High Definition Audio)"
+}
+```
+この例だと、オプションを指定して上書きしない限り、voxsay は
+```
+-prod voicevoxnemo -speed 1.5 -outputdevice "EX-LDGC242HT (NVIDIA High Definition Audio)" -index 10003
+```
+が指定されたものとして動作します。
 
 
 ### 使用しているサードパーティライブラリとライセンス
