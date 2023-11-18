@@ -40,7 +40,7 @@ namespace voxsaycmd
         public double? PostPhonemeLength { get; private set; } = null;
         
         [DataMember(Name ="samplingrate")]
-        public int? OutputSamplingRate { get; set; } = null;
+        public int? OutputSamplingRate { get; private set; } = null;
 
         [DataMember(Name ="outputdevice")]
         public string OutputDevice { get; private set; } = null;
