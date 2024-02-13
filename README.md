@@ -20,7 +20,8 @@ command line exsamples:
 Options:
     -devlist              : List playback device.
     -prodlist             : List available local TTS products.
-    -prod TTS             : Select tts product. TTS := <sapi | voicevox | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -prod TTS             : Select tts product.
+                              TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
