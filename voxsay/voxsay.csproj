@@ -257,6 +257,13 @@
     <Compile Include="Base\Coeiroink\Coeiroinkv2Params.cs" />
     <Compile Include="Base\EnumClass.cs" />
     <Compile Include="Base\ProductInfo.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxFrameAudioQuery.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxFramePhoneme.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxMyNoteInfo.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxNote.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxNoteGenerator.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxNotes.cs" />
+    <Compile Include="Base\VoiceVox\VoiceVoxSingers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Base\VoiceVox\VoiceVoxAccentPhrase.cs" />
     <Compile Include="Base\VoiceVox\VoiceVoxAudioQuery.cs" />

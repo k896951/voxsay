@@ -6,11 +6,13 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using SpeechLib;
+using voxsay.Base.VoiceVox;
 
 namespace voxsay
 {
@@ -318,6 +320,22 @@ namespace voxsay
         }
 
         /// <summary>
+        /// 利用可能な歌手の取り出し
+        /// </summary>
+        /// <returns>歌手番号と名称の組み合わせのリスト</returns>
+        public List<KeyValuePair<int, string>> AvailableSingers()
+        {
+            switch (SelectedProdinfo.Product)
+            {
+                case ProdnameEnum.voicevox:
+                    return VoiceVoxAvailableSingers();
+
+                default:
+                    return new List<KeyValuePair<int, string>>();
+            }
+        }
+
+        /// <summary>
         /// 音声保存
         /// </summary>
         /// <param name="speaker">話者番号（StyleId）</param>
@@ -463,6 +481,88 @@ namespace voxsay
 
         }
 
+        /// <summary>
+        /// 歌唱
+        /// </summary>
+        /// <param name="speaker">話者番号（StyleId）</param>
+        /// <param name="param">エフェクト</param>
+        /// <param name="mynotes">歌唱させる楽譜</param>
+        public bool Sing(int speaker, SpeakerParams param, List<VoiceVoxMyNoteInfo> mynotes)
+        {
+            switch (SelectedProdinfo.Product)
+            {
+                case ProdnameEnum.voicevox:
+                    var voicevoxFrameQuery = GetVoiceVoxFrameAudioQuery(mynotes, 6000); // 現時点では6000固定
+
+                    if ((voicevoxFrameQuery != null) && (param != null))
+                    {
+                        voicevoxFrameQuery.VolumeScale = param.volumeScale;
+                        voicevoxFrameQuery.OutputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    return PostVoiceVoxFrameSynthesisQuery(voicevoxFrameQuery, speaker, "");
+
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// 非同期歌唱
+        /// </summary>
+        /// <param name="speaker">話者番号（StyleId）</param>
+        /// <param name="param">エフェクト</param>
+        /// <param name="mynotes">歌唱させる楽譜</param>
+        public void AsyncSing(int speaker, SpeakerParams param, List<VoiceVoxMyNoteInfo> mynotes)
+        {
+            switch (SelectedProdinfo.Product)
+            {
+                case ProdnameEnum.voicevox:
+                    var voicevoxFrameQuery = GetVoiceVoxFrameAudioQuery(mynotes, 6000); // 現時点では6000固定
+
+                    if ((voicevoxFrameQuery != null) && (param != null))
+                    {
+                        voicevoxFrameQuery.VolumeScale = param.volumeScale;
+                        voicevoxFrameQuery.OutputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    AsyncPostVoiceVoxFrameSynthesisQuery(voicevoxFrameQuery, speaker);
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+
+        /// <summary>
+        /// 歌唱保存
+        /// </summary>
+        /// <param name="speaker">話者番号（StyleId）</param>
+        /// <param name="param">エフェクト</param>
+        /// <param name="mynotes">歌唱させる楽譜</param>
+        /// <param name="WavFilePath">保存するファイル名</param>
+        public bool SaveSong(int speaker, SpeakerParams param, List<VoiceVoxMyNoteInfo> mynotes, string WavFilePath)
+        {
+            switch (SelectedProdinfo.Product)
+            {
+                case ProdnameEnum.voicevox:
+                    var voicevoxFrameQuery = GetVoiceVoxFrameAudioQuery(mynotes, 6000);// 現時点では6000固定
+
+                    if ((voicevoxFrameQuery != null) && (param != null))
+                    {
+                        voicevoxFrameQuery.VolumeScale = param.volumeScale;
+                        voicevoxFrameQuery.OutputSamplingRate = param.outputSamplingRate;
+                    }
+
+                    return PostVoiceVoxFrameSynthesisQuery(voicevoxFrameQuery, speaker, WavFilePath);
+
+                default:
+
+                    return false;
+            }
+        }
+
         private void SettingJsonHeader()
         {
             ConClient.DefaultRequestHeaders.Accept.Clear();
@@ -509,6 +609,51 @@ namespace voxsay
                 catch (Exception e)
                 {
                     Console.WriteLine("PostVoiceVoxSynthesisQuery:{0}", e.Message);
+                    ans = false;
+                }
+            }).Wait();
+
+            return ans;
+        }
+
+        private bool PostVoiceVoxFrameSynthesisQuery(VoiceVoxFrameAudioQuery query, int speaker, string saveFileName)
+        {
+            var json = new DataContractJsonSerializer(typeof(VoiceVoxFrameAudioQuery));
+            MemoryStream ms = new MemoryStream();
+            bool ans = true;
+
+            json.WriteObject(ms, query);
+
+            var content = new StringContent(Encoding.UTF8.GetString(ms.ToArray()), Encoding.UTF8, "application/json");
+
+            Task.Run(async () => {
+
+                SettingJsonHeader();
+
+                try
+                {
+                    var response = await ConClient.PostAsync(string.Format(@"{0}/frame_synthesis?speaker={1}", BaseUri, speaker), content);
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string tempFileName = saveFileName == "" ? Path.GetTempFileName() : saveFileName;
+
+                        using (FileStream tempfile = new FileStream(tempFileName, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await response.Content.CopyToAsync(tempfile);
+                        }
+
+                        if (saveFileName == "")
+                        {
+                            PlayWaveFile(tempFileName);
+                            File.Delete(tempFileName);
+                        }
+
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("PostVoiceVoxFrameSynthesisQuery:{0}", e.Message);
                     ans = false;
                 }
             }).Wait();
@@ -652,6 +797,44 @@ namespace voxsay
 
         }
 
+        private void AsyncPostVoiceVoxFrameSynthesisQuery(VoiceVoxFrameAudioQuery query, int speaker)
+        {
+            var jsonFrameQuery = new DataContractJsonSerializer(typeof(VoiceVoxFrameAudioQuery));
+            MemoryStream ms = new MemoryStream();
+
+            jsonFrameQuery.WriteObject(ms, query);
+
+            var content = new StringContent(Encoding.UTF8.GetString(ms.ToArray()), Encoding.UTF8, "application/json");
+
+            Task.Run(async () => {
+
+                SettingJsonHeader();
+
+                try
+                {
+                    var response = await ConClient.PostAsync(string.Format(@"{0}/frame_synthesis?speaker={1}", BaseUri, speaker), content);
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string tempFileName = Path.GetTempFileName();
+
+                        using (FileStream tempfile = new FileStream(tempFileName, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await response.Content.CopyToAsync(tempfile);
+                        }
+
+                        PlayWaveFile(tempFileName);
+                        File.Delete(tempFileName);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("AsyncPostVoiceVoxFrameSynthesisQuery:{0}", e.Message);
+                }
+            });
+
+        }
+
         private void AsyncPostCoeiroinkv2SynthesisQuery(Coeiroinkv2AudioQuery aq, int speaker)
         {
             var json = new DataContractJsonSerializer(typeof(Coeiroinkv2AudioQuery));
@@ -761,6 +944,61 @@ namespace voxsay
             return ans;
         }
 
+        private VoiceVoxFrameAudioQuery GetVoiceVoxFrameAudioQuery(List<VoiceVoxMyNoteInfo> mynotes, int speaker)
+        {
+            string url = string.Format(@"{0}/sing_frame_audio_query?speaker={1}", BaseUri, speaker);
+            DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
+            VoiceVoxFrameAudioQuery ans = null;
+
+            settings.UseSimpleDictionaryFormat = true;
+
+            var Score = new VoiceVoxNotes();
+            
+            Score.Notes = new List<VoiceVoxNote>();
+            foreach (var note in mynotes)
+            {
+                var noteobj = new VoiceVoxNote();
+                noteobj.Lyric = note.Lyric;
+                noteobj.Key = note.Key;
+                noteobj.Frame_Length = Convert.ToInt32(note.FrameLength);
+
+                if ((note.Lyric=="")&&(note.Note=="R"))
+                {
+                    noteobj.Key = null;
+                }
+                Score.Notes.Add(noteobj);
+            }
+
+            var jsonNotes = new DataContractJsonSerializer(typeof(List<VoiceVoxNotes>));
+            MemoryStream ms = new MemoryStream();
+
+            jsonNotes.WriteObject(ms, Score);
+
+            var content = new StringContent(Encoding.UTF8.GetString(ms.ToArray()), Encoding.UTF8, "application/json");
+
+            Task.Run(async () => {
+                SettingJsonHeader();
+
+                try
+                {
+                    var response = await ConClient.PostAsync(url, content);
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        var json = new DataContractJsonSerializer(typeof(VoiceVoxFrameAudioQuery), settings);
+                        ans = (VoiceVoxFrameAudioQuery)json.ReadObject(await response.Content.ReadAsStreamAsync());
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("GetVoiceVoxFrameAudioQuery:{0}", e.Message);
+                    ans = null;
+                }
+            }).Wait();
+
+            return ans;
+        }
+
         private Coeiroinkv2AudioQuery GetCoeiroinkv2AudioQuery(string text, int speaker)
         {
             Coeiroinkv2AudioQuery ans = new Coeiroinkv2AudioQuery();
@@ -842,6 +1080,40 @@ namespace voxsay
                 catch (Exception e)
                 {
                     Console.WriteLine("VoiceVoxAvailableCasts:{0}", e.Message);
+                    ans = null;
+                }
+            }).Wait();
+
+            return ans;
+        }
+
+        private List<KeyValuePair<int, string>> VoiceVoxAvailableSingers()
+        {
+            DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
+            List<VoiceVoxSingers> speakers = new List<VoiceVoxSingers>();
+            var ans = new List<KeyValuePair<int, string>>();
+
+            Task.Run(async () => {
+                SettingJsonHeader();
+
+                try
+                {
+                    var response = await ConClient.GetAsync(string.Format("{0}/singers", BaseUri));
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        var json = new DataContractJsonSerializer(typeof(List<VoiceVoxSingers>), settings);
+
+                        speakers = (List<VoiceVoxSingers>)json.ReadObject(await response.Content.ReadAsStreamAsync());
+
+                        ans = speakers.SelectMany(v1 => v1.styles.Select(v2 => new { id = v2.Id, speaker_uuid = v1.speaker_uuid, name = string.Format("{0}（{1}）", v1.name, v2.Name) }))
+                                      .OrderBy(v => v.id)
+                                      .Select(v => new KeyValuePair<int, string>(v.id, v.name)).ToList();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("VoiceVoxAvailableSingers:{0}", e.Message);
                     ans = null;
                 }
             }).Wait();

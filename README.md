@@ -24,6 +24,7 @@ Options:
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
+    -renderingmode MODE   : Switch between talk mode and singing mode. MODE := sing | talk
 
     -index N              : specify the speaker index.
                             Example: -index 4 -> Speak with the 4th speaker.
@@ -123,6 +124,79 @@ F:\Sandbox>
 ```
 
 あとは各自オプションを試してください。
+
+### 定義ファイル
+
+オプションのいくつかは、voxsay.exeと同じフォルダに作成したJSONファイル voxsayconf.json で省略できます。
+```
+{
+	"prod":"voicevoxnemo",
+	"index":10003,
+	"speed":1.5,
+	"outputdevice":"EX-LDGC242HT (NVIDIA High Definition Audio)"
+}
+```
+この例だと、オプションを指定して上書きしない限り、voxsay は
+```
+-prod voicevoxnemo -speed 1.5 -outputdevice "EX-LDGC242HT (NVIDIA High Definition Audio)" -index 10003
+```
+が指定されたものとして動作します。
+
+### 歌唱（VOICEVOX専用）
+
+オプション -prod voicevox, -renderingmode sing, を指定すると、VOICEVOX 0.16.1で利用可能になった歌唱APIを使って歌わせることができます。
+話者一覧でインデクスを確認します。-renderingmode talk の時と番号が異なるので注意してください。
+```
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -list
+index: 3000,  speaker:四国めたん（あまあま）
+index: 3001,  speaker:ずんだもん（あまあま）
+index: 3002,  speaker:四国めたん（ノーマル）
+index: 3003,  speaker:ずんだもん（ノーマル）
+index: 3004,  speaker:四国めたん（セクシー）
+index: 3005,  speaker:ずんだもん（セクシー）
+index: 3006,  speaker:四国めたん（ツンツン）
+index: 3007,  speaker:ずんだもん（ツンツン）
+index: 3008,  speaker:春日部つむぎ（ノーマル）
+index: 3009,  speaker:波音リツ（ノーマル）
+index: 3010,  speaker:雨晴はう（ノーマル）
+index: 6000,  speaker:波音リツ（ノーマル）
+
+f:\sandbox>
+```
+春日部つむぎにドレミファソラシドを歌ってもらいましょう。
+```
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t o4cdefgabo5c
+
+f:\sandbox>
+```
+-t オプションで MMLを指定する事で歌唱が可能になります。ただし正確な実装ではありません。それらしいように仕上げただけです。
+
+| マクロ     | 説明                                              | 指定例 | デフォルト |
+|------------|---------------------------------------------------|--------|------------|
+| Tnum       | テンポを指定。範囲は30～、上限は確認していない。  | T60 → テンポ(BPM)に60を指定  |  T120  |
+| Onum       | オクターブ指定。範囲は0～9                        | O5 → オクターブを5に指定     |  O4    |
+| Lnum       | 休符、音符のデフォルト長指定。1,2,4,8,16,32のみ指定できる。 | L8→デフォルトの音符を8分音符、休符を8分休符に設定  | L4  |
+| R[num]     | 休符。休符の長さを指定する時は1,2,4,8,16,32から選択する。   | R4→4分休符の指定                                   |     |
+| [CDEFGAB]num[#-]  | 音符。C～Bがド～シに対応。音符の長さを指定する時は1,2,4,8,16,32から選択する。#を付けると半音上げ、-を付けると半音下げ  | C16→ドを16分休符で指定 |   |
+
+
+
+ちゃんと歌詞を付けたい？音符にひらがなを割当てて歌唱させることができます。
+```
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t かしをわりあてる:o4cdefgabo5c
+
+f:\sandbox>
+```
+音符の出現順にひらがなもしくはカタカナを割り当てます。漢字や英数字はダメです。
+
+長すぎて対応が取れなくなる？カンマで区切って整形する事が出来ます。
+```
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t o4, かしを:cde, わりあてる:fgabo5c
+
+f:\sandbox>
+```
+小節単位で区切るなどすると分かりやすいかもしれません。
+
 
 
 ## 使用しているサードパーティライブラリとライセンス

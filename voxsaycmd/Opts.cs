@@ -27,6 +27,7 @@ namespace voxsaycmd
         public bool IsRequestDevList { get; private set; } = false;
         public bool IsRequestActiveProductList { get; private set; } = false;
         public bool IsSafe { get; private set; } = false;
+        public string RenderingMode { get; private set; } = null;
 
         private string ConfFileNamee = @".\voxsayconf.json";
 
@@ -134,6 +135,19 @@ namespace voxsaycmd
                         else
                         {
                             Console.WriteLine(@"Error: Incorrect save specification.");
+                            IsSafe = false;
+                        }
+                        break;
+
+                    case "-renderingmode":
+                        if (i + 1 <= args.Length)
+                        {
+                            RenderingMode = args[i + 1];  // "sing" or "talk" 
+                            i++;
+                        }
+                        else
+                        {
+                            Console.WriteLine(@"Error: Incorrect renderingmode specification.");
                             IsSafe = false;
                         }
                         break;
@@ -386,6 +400,7 @@ namespace voxsaycmd
                     OutputSamplingRate = json.OutputSamplingRate;
                     Index = json.Index;
                     OutputDevice = json.OutputDevice;
+                    RenderingMode = json.RenderingMode;
                 }
             }
         }
@@ -394,19 +409,21 @@ namespace voxsaycmd
         {
             Console.WriteLine(
                 @"
-voxsay command (c)2022,2023 by k896951
+voxsay command (c)2022,2023,2024 by k896951
 
 command line exsamples:
     voxsay -devlist
     voxsay -prodlist
-    voxsay <-prod TTS> [-host host] [-port port] -list
-    voxsay <-prod TTS> [-host host] [-port port] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
+    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] -list
+    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
     -devlist              : List playback device.
     -prodlist             : List available local TTS products.
     -prod TTS             : Select tts product.
                               TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -renderingmode MODE   : Select rendering mode. default is ""talk"".
+                              MODE := talk | sing
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
@@ -442,6 +459,8 @@ Options:
 
 Note:
     If TTS is ""sapi"", only the following options are valid: -list, -save, -outputdevice, -speed, -volume, -t 
+
+    The renderingmode option is only for VOICEVOX.
 "
             );
         }

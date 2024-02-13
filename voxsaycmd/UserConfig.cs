@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.Serialization;
 
 namespace voxsaycmd
 {
@@ -47,5 +40,8 @@ namespace voxsaycmd
 
         [DataMember(Name ="index")]
         public int? Index { get; private set; } = null;
+
+        [DataMember(Name = "renderingmode")]
+        public string RenderingMode { get; private set; } = null;
     }
 }

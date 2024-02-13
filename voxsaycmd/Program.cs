@@ -11,6 +11,7 @@ namespace voxsaycmd
             int rcd = 0;
             Opts opt = new Opts(args);
 
+
             if (!opt.IsSafe) return 8;
 
             // 再生デバイス一覧表示
@@ -60,9 +61,22 @@ namespace voxsaycmd
             // 話者一覧表示
             if (opt.IsRequestSpeakerList)
             {
-                foreach(var item in api.AvailableCasts())
+                switch (opt.RenderingMode)
                 {
-                    Console.WriteLine(string.Format(@"index: {0},  speaker:{1}", item.Key, item.Value));
+                    case "sing":
+                        foreach (var item in api.AvailableSingers())
+                        {
+                            Console.WriteLine(string.Format(@"index: {0},  speaker:{1}", item.Key, item.Value));
+                        }
+                        break;
+
+                    case "talk":
+                    default:
+                        foreach (var item in api.AvailableCasts())
+                        {
+                            Console.WriteLine(string.Format(@"index: {0},  speaker:{1}", item.Key, item.Value));
+                        }
+                        break;
                 }
 
                 return 0;
@@ -80,19 +94,44 @@ namespace voxsaycmd
                 if (opt.PostPhonemeLength != null) pm.postPhonemeLength = (double)opt.PostPhonemeLength;
                 if (opt.OutputSamplingRate != null) pm.outputSamplingRate = (int)opt.OutputSamplingRate;
 
-                if (opt.SaveFile != null)
+
+                // とりあえずの呼び出し処理を追加
+                if (opt.RenderingMode=="sing")
                 {
-                    string f = opt.SaveFile;
-                    Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
+                    var obj = new VoiceVoxNoteGenerator();
+                    var mynotes = obj.ParseSingString(opt.TalkText);
 
-                    if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
+                    if (opt.SaveFile != null)
+                    {
+                        string f = opt.SaveFile;
+                        Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
 
-                    if (!api.Save((int)opt.Index, pm, opt.TalkText, f)) rcd = 8;
+                        if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
+
+                        if (!api.SaveSong((int)opt.Index, pm, mynotes, f)) rcd = 8;
+                    }
+                    else
+                    {
+                        if (!api.Sing((int)opt.Index, pm, mynotes)) rcd = 8;
+                    }
                 }
                 else
                 {
-                    if (!api.Speak((int)opt.Index, pm, opt.TalkText)) rcd = 8;
+                    if (opt.SaveFile != null)
+                    {
+                        string f = opt.SaveFile;
+                        Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
+
+                        if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
+
+                        if (!api.Save((int)opt.Index, pm, opt.TalkText, f)) rcd = 8;
+                    }
+                    else
+                    {
+                        if (!api.Speak((int)opt.Index, pm, opt.TalkText)) rcd = 8;
+                    }
                 }
+
             }
 
             return rcd;
