@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using voxsay;
 
@@ -98,8 +99,14 @@ namespace voxsaycmd
                 // とりあえずの呼び出し処理を追加
                 if (opt.RenderingMode=="sing")
                 {
-                    var obj = new VoiceVoxNoteGenerator();
+                    var obj = new NoteGenerator();
                     var mynotes = obj.ParseSingString(opt.TalkText);
+
+                    if(opt.ExportNote)
+                    {
+                        var str = obj.ExportNotes(mynotes);
+                        File.WriteAllText(@".\MyScore.json", str);
+                    }
 
                     if (opt.SaveFile != null)
                     {

@@ -1,6 +1,6 @@
 ﻿namespace voxsay
 {
-    public class VoiceVoxMyNoteInfo
+    public class MyNoteInfo
     {
         public string Lyric { get; set; }
         public string Note { get; set; }

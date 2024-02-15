@@ -487,7 +487,7 @@ namespace voxsay
         /// <param name="speaker">話者番号（StyleId）</param>
         /// <param name="param">エフェクト</param>
         /// <param name="mynotes">歌唱させる楽譜</param>
-        public bool Sing(int speaker, SpeakerParams param, List<VoiceVoxMyNoteInfo> mynotes)
+        public bool Sing(int speaker, SpeakerParams param, List<MyNoteInfo> mynotes)
         {
             switch (SelectedProdinfo.Product)
             {
@@ -513,7 +513,7 @@ namespace voxsay
         /// <param name="speaker">話者番号（StyleId）</param>
         /// <param name="param">エフェクト</param>
         /// <param name="mynotes">歌唱させる楽譜</param>
-        public void AsyncSing(int speaker, SpeakerParams param, List<VoiceVoxMyNoteInfo> mynotes)
+        public void AsyncSing(int speaker, SpeakerParams param, List<MyNoteInfo> mynotes)
         {
             switch (SelectedProdinfo.Product)
             {
@@ -542,7 +542,7 @@ namespace voxsay
         /// <param name="param">エフェクト</param>
         /// <param name="mynotes">歌唱させる楽譜</param>
         /// <param name="WavFilePath">保存するファイル名</param>
-        public bool SaveSong(int speaker, SpeakerParams param, List<VoiceVoxMyNoteInfo> mynotes, string WavFilePath)
+        public bool SaveSong(int speaker, SpeakerParams param, List<MyNoteInfo> mynotes, string WavFilePath)
         {
             switch (SelectedProdinfo.Product)
             {
@@ -944,7 +944,7 @@ namespace voxsay
             return ans;
         }
 
-        private VoiceVoxFrameAudioQuery GetVoiceVoxFrameAudioQuery(List<VoiceVoxMyNoteInfo> mynotes, int speaker)
+        private VoiceVoxFrameAudioQuery GetVoiceVoxFrameAudioQuery(List<MyNoteInfo> mynotes, int speaker)
         {
             string url = string.Format(@"{0}/sing_frame_audio_query?speaker={1}", BaseUri, speaker);
             DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();

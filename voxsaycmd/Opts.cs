@@ -28,6 +28,7 @@ namespace voxsaycmd
         public bool IsRequestActiveProductList { get; private set; } = false;
         public bool IsSafe { get; private set; } = false;
         public string RenderingMode { get; private set; } = null;
+        public bool ExportNote { get; private set; } = false;
 
         private string ConfFileNamee = @".\voxsayconf.json";
 
@@ -150,6 +151,10 @@ namespace voxsaycmd
                             Console.WriteLine(@"Error: Incorrect renderingmode specification.");
                             IsSafe = false;
                         }
+                        break;
+
+                    case "-exportnote":
+                        ExportNote = true;
                         break;
 
                     case "-samplingrate":
