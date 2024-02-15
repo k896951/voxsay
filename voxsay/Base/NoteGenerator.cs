@@ -12,14 +12,19 @@ namespace voxsay
     public class NoteGenerator
     {
         private const double FrameDurationParTick = 0.01;
-        private const double QuarterNoteFrameLength = 50.0;
+        private const double QuarterNoteFrameLength = 50.0; // BPM=120
+
+        private const string MacroMatchReg = @"^[TOLRCDEFGAB]\d{0,}\.{0,1}[#+-]{0,1}";
+        private const string MacroNumMatchReg = @"\d{1,}";
+        private const string MacroDotMatchReg = @"\.";
+        private const string MacroKeyModifierMatchReg = @"[#-+]";
+        private const string MacroNoteLenMatchReg = @"\d{0,}\.{0,1}";
 
         private int tempo = 120;
-        private int octave =4;
+        private int octave = 4;
 
-        private int currentNoteLen;
-        private int currentKeyBase;
-        private int currentNoteListIndex;
+        //private int currentNoteLen;
+        //private int currentKeyBase;
 
         private Dictionary<int, double> NoteLengthToFrameLengthMap = new Dictionary<int, double>()
         {
@@ -82,29 +87,23 @@ namespace voxsay
             { "B", 11}
         };
 
-        public int Bpm
+        private void Bpm(int value)
         {
-            get
-            {
-                return tempo;
-            }
+            // たぶん800が限界
 
-            set
-            {
-                tempo = value;
+            tempo = value;
 
-                double magnification = Convert.ToDouble(60.0 / tempo) / FrameDurationParTick;
+            double magnification = Convert.ToDouble(60.0 / tempo) / FrameDurationParTick;
 
-                NoteLengthToFrameLengthMap[1] = magnification * 4;  // 　　全音符フレーム数
-                NoteLengthToFrameLengthMap[2] = magnification * 2;  // 　２分音符フレーム数
-                NoteLengthToFrameLengthMap[4] = magnification;      // 　４分音符フレーム数
-                NoteLengthToFrameLengthMap[8] = magnification / 2;  // 　８分音符フレーム数
-                NoteLengthToFrameLengthMap[16] = magnification / 4; // １６分音符フレーム数
-                NoteLengthToFrameLengthMap[32] = magnification / 8; // ３２分音符フレーム数
-            }
+            NoteLengthToFrameLengthMap[1] = magnification * 4;  // 　　全音符フレーム数
+            NoteLengthToFrameLengthMap[2] = magnification * 2;  // 　２分音符フレーム数
+            NoteLengthToFrameLengthMap[4] = magnification;      // 　４分音符フレーム数
+            NoteLengthToFrameLengthMap[8] = magnification / 2;  // 　８分音符フレーム数
+            NoteLengthToFrameLengthMap[16] = magnification / 4; // １６分音符フレーム数
+            NoteLengthToFrameLengthMap[32] = magnification / 8; // ３２分音符フレーム数
         }
 
-        public int Octave
+        private int Octave
         {
             get
             {
@@ -119,23 +118,22 @@ namespace voxsay
 
         public NoteGenerator()
         {
-            Bpm = 120;
-            currentNoteLen = 4;
-            currentKeyBase = OctaveToKeyMap[octave];
-            currentNoteListIndex = 0;
+            Bpm(120);
         }
 
         public List<MyNoteInfo> ParseSingString(string singtext)
         {
             List<MyNoteInfo> ans = new List<MyNoteInfo>();
+            int currentNoteListIndex = 0;
+            int currentNoteLen = 4;
+            int currentKeyBase = OctaveToKeyMap[octave];
 
-            ans.Add(new MyNoteInfo());
+        // 最初にごく短い休符を入れておく
+        ans.Add(new MyNoteInfo());
             ans[0].Lyric = "";
             ans[0].Note = "R";
             ans[0].Key = OctaveToKeyMap[octave];
             ans[0].FrameLength = 2;
-
-            currentNoteListIndex = 0;
 
             foreach (var measure in Regex.Split(singtext, @"[,]"))
             {
@@ -145,12 +143,12 @@ namespace voxsay
                     switch (parts.Length)
                     {
                         case 1:
-                            ParseMMLString(parts[0].Trim(), ref ans);
+                            ParseMMLString(parts[0].Trim(), ref currentNoteLen, ref currentKeyBase, ref ans);
                             break;
 
                         case 2:
-                            ParseMMLString(parts[1].Trim(), ref ans);
-                            ParseLyricString(parts[0].Trim(), ref ans); // ParseMMLString()のあとに呼ぶ
+                            ParseMMLString(parts[1].Trim(), ref currentNoteLen, ref currentKeyBase, ref ans);
+                            ParseLyricString(parts[0].Trim(), ref currentNoteListIndex, ref ans); // ParseMMLString()のあとに呼ぶ
                             break;
 
                         default:
@@ -201,58 +199,77 @@ namespace voxsay
             return ans;
         }
 
-        private void ParseMMLString(string mml, ref List<MyNoteInfo> mynotes)
+        private void ParseMMLString(string mml, ref int currentnotelen, ref int currentkeybase, ref List<MyNoteInfo> mynotes)
         {
-            string lenMatchReg0 = @"^[TOLRCDEFGAB]\d{0,}\.{0,1}[#+-]{0,1}";
-            string lenMatchReg1 = @"\d+";
-            string lenMatchReg2 = @"\.";
-            string lenMatchReg3 = @"\d*\.*";
             string localMML = mml.ToUpper();
-            int localNumPart = currentNoteLen;
+            int localNumPart;
 
             int addpos;
             for (var pos = 0; pos < localMML.Length; pos += addpos)
             {
-                if (!Regex.IsMatch(localMML.Substring(pos), lenMatchReg0 ))
+                // MMLマクロの書式に合致しないならエラー
+                if (!Regex.IsMatch(localMML.Substring(pos), MacroMatchReg ))
                 {
                     throw new Exception(string.Format(@"column {0}, '{1}' is unknown.", pos + 1, localMML.Substring(pos, 1)));
                 }
 
-                string token = Regex.Match(localMML.Substring(pos), lenMatchReg0).Value;
+                // 処理対象部分の切り出し
+                string token = Regex.Match(localMML.Substring(pos), MacroMatchReg).Value;
                 addpos = token.Length;
 
-                // 数値指定があれば抜き出す
-                if (Regex.IsMatch(token, lenMatchReg1))
-                {
-                    int.TryParse(Regex.Match(token, lenMatchReg1).Value, out localNumPart);
-                }
+                // 数値の指定があるか否か
+                var num = Regex.IsMatch(token, MacroNumMatchReg);
 
                 // "."の指定があるか否か
-                var dot = Regex.IsMatch(token, lenMatchReg2);
+                var dot = Regex.IsMatch(token, MacroDotMatchReg);
+
+                // キー修飾(#,+,-)があるか否か
+                var keyModify = Regex.IsMatch(token, MacroKeyModifierMatchReg);
 
                 // 各マクロ処理
                 string macro = token.Substring(0, 1);
                 switch (macro)
                 {
                     case "T":
-                        Bpm = localNumPart;
+                        // テンポの変更
+                        if(dot || keyModify || !num)
+                        {
+                            throw new Exception(string.Format(@"column {0}, {1} is syntax error.", pos + 1, token));
+                        }
+
+                        int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localNumPart);
+                        Bpm(localNumPart);
                         break;
 
                     case "O":
+                        // オクターブの変更（基準キー位置の変更）
+                        if (dot || keyModify || !num)
+                        {
+                            throw new Exception(string.Format(@"column {0}, {1} is syntax error.", pos + 1, token));
+                        }
+
+                        int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localNumPart);
                         if (!OctaveToKeyMap.ContainsKey(localNumPart))
                         {
                             throw new Exception(string.Format(@"column {0}, {1} is out of range.", pos + 2, localNumPart));
                         }
                         Octave = localNumPart;
-                        currentKeyBase = OctaveToKeyMap[localNumPart];
+                        currentkeybase = OctaveToKeyMap[Octave];
                         break;
 
                     case "L":
+                        // 音符・休符のデフォルト長変更
+                        if (keyModify || !num)
+                        {
+                            throw new Exception(string.Format(@"column {0}, {1} is syntax error.", pos + 1, token));
+                        }
+
+                        int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localNumPart);
                         if (!NoteLengthToFrameLengthMap.ContainsKey(localNumPart))
                         {
                             throw new Exception(string.Format(@"column {0}, {1} is out of range.", pos + 2, localNumPart));
                         }
-                        currentNoteLen = localNumPart;
+                        currentnotelen = localNumPart;
                         break;
 
                     case "R":
@@ -263,6 +280,9 @@ namespace voxsay
                     case "G":
                     case "A":
                     case "B":
+                        localNumPart = currentnotelen;
+                        if (num) int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localNumPart);
+
                         if (!NoteLengthToFrameLengthMap.ContainsKey(localNumPart))
                         {
                             throw new Exception(string.Format(@"column {0}, {1} is out of range.", pos + 2, localNumPart));
@@ -273,14 +293,15 @@ namespace voxsay
                         noteItem.Note = token;
                         noteItem.Lyric = macro == "R" ? "" : NoteToSampleLyricMap[macro];  // 歌詞無しの場合の歌唱用
 
-                        var note = Regex.Replace(token, lenMatchReg3, "");
+                        var note = Regex.Replace(token, MacroNoteLenMatchReg, "");
 
                         if ((macro != "R") &&(!NoteToKeyDispMap.ContainsKey(note)))
                         {
                             throw new Exception(string.Format(@"column {0}, {1} is unknown key.", pos + 1, note));
                         }
 
-                        noteItem.Key = macro == "R" ? currentKeyBase : currentKeyBase + NoteToKeyDispMap[note];
+                        noteItem.Key = macro == "R" ? currentkeybase : currentkeybase + NoteToKeyDispMap[note];
+
                         noteItem.FrameLength = NoteLengthToFrameLengthMap[localNumPart];
 
                         if (dot) noteItem.FrameLength *= 1.5; // 付点音符・付点休符の補正
@@ -291,35 +312,33 @@ namespace voxsay
 
         }
 
-        private void ParseLyricString(string lyric, ref List<MyNoteInfo> mynotes)
+        private void ParseLyricString(string lyric, ref int noteindex, ref List<MyNoteInfo> mynotes)
         {
-            int myNoteInfoIndex = currentNoteListIndex;
-
-            while (mynotes[myNoteInfoIndex].Note == "R")
+            // 最初の音符を探す
+            while (mynotes[noteindex].Note == "R")
             {
-                myNoteInfoIndex++;
-                if (myNoteInfoIndex > mynotes.Count)
-                {
-                    return ;
-                }
+                noteindex++;
+                if (noteindex > mynotes.Count) return;
             }
 
             for (var idx = 0; idx < lyric.Length; idx++)
             {
-
-                while (mynotes[myNoteInfoIndex].Note == "R")
+                // 休符をスキップする
+                while (mynotes[noteindex].Note == "R")
                 {
-                    myNoteInfoIndex++;
-                    if (myNoteInfoIndex > mynotes.Count) break;
+                    noteindex++;
+                    if (noteindex > mynotes.Count) break;
                 }
 
+                // 音符に歌詞を割り当てる
                 string lyricChar = lyric[idx].ToString();
                 switch (lyricChar)
                 {
                     case "ー":
                     case "っ":
                     case "ッ":
-                        myNoteInfoIndex--;
+                        // 促音、長音記号は割り当てない
+                        noteindex--;
                         break;
 
                     case "ゃ":
@@ -328,25 +347,27 @@ namespace voxsay
                     case "ュ":
                     case "ょ":
                     case "ョ":
+                        // 拗音文字は直前の音符の歌詞に加える
                         if (idx >= 1)
                         {
-                            mynotes[myNoteInfoIndex - 1].Lyric += lyricChar;
-                            myNoteInfoIndex--;
+                            mynotes[noteindex - 1].Lyric += lyricChar;
+                            noteindex--;
                         }
                         else
                         {
-                            mynotes[myNoteInfoIndex].Lyric = lyricChar;
+                            mynotes[noteindex].Lyric = lyricChar;
                         }
                         break;
 
                     default:
-                        mynotes[myNoteInfoIndex].Lyric = lyricChar;
+                        // 音符に歌詞を割り当てる
+                        mynotes[noteindex].Lyric = lyricChar;
                         break;
 
                 }
 
-                myNoteInfoIndex++;
-                if (myNoteInfoIndex >= mynotes.Count) break;
+                noteindex++;
+                if (noteindex >= mynotes.Count) break; // 音符の数より文字数が多いならここで割り当てを終了する
 
             };
 

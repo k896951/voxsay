@@ -1,27 +1,29 @@
-﻿# これは何
+﻿# voxsay
 
-voicevox | coeiroink/v2 | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用CUIクライアント
+voicevox | coeiroink/v2 | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用のCUIクライアント
 
-### 使用方法
+## 使用方法
 
-オプション無しで実行するとヘルプが出ます。
+各音声合成製品を起動します。その後にvoxsay.exeをオプション無しで実行するとヘルプが出ます。
 
 ```
-F:\Sandbox>voxsay
+f:\sandbox\voxsay>voxsay
 
-voxsay command (c)2022,2023 by k896951
+voxsay command (c)2022,2023,2024 by k896951
 
 command line exsamples:
     voxsay -devlist
     voxsay -prodlist
-    voxsay <-prod TTS> [-host host] [-port port] -list
-    voxsay <-prod TTS> [-host host] [-port port] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
+    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] -list
+    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
     -devlist              : List playback device.
     -prodlist             : List available local TTS products.
     -prod TTS             : Select tts product.
                               TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -renderingmode MODE   : Select rendering mode. default is "talk".
+                              MODE := talk | sing
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
     -list                 : List speakers for a given product.
@@ -58,25 +60,28 @@ Options:
 Note:
     If TTS is "sapi", only the following options are valid: -list, -save, -outputdevice, -speed, -volume, -t
 
-F:\Sandbox>
+    The renderingmode option is only for VOICEVOX.
+
+
+f:\sandbox\voxsay>
 ```
 
 ローカルで稼働している製品一覧を確認します。
 
 ```
-F:\Sandbox>voxsay -prodlist
+f:\sandbox>voxsay -prodlist
 product: sapi
 product: sharevox
 product: voicevox
 product: coeiroinkv2
 
-F:\Sandbox>
+f:\sandbox>
 ```
 
 SHAREVOXの話者一覧でインデクスを確認します。
 
 ```
-F:\Sandbox>voxsay -prod sharevox -list
+f:\sandbox>voxsay -prod sharevox -list
 index: 0,  speaker:小春音アミ（ノーマル）
 index: 1,  speaker:小春音アミ（喜び）
 index: 2,  speaker:小春音アミ（怒り）
@@ -104,23 +109,23 @@ index: 23,  speaker:風花ゆき（ノーマル）
 index: 24,  speaker:安倍広葉（ノーマル）
 index: 25,  speaker:鈴乃（ノーマル）
 
-F:\Sandbox>
+f:\sandbox>
 ```
 
 鈴乃（ノーマル）に呟いてもらいます。
 
 ```
-F:\Sandbox>voxsay -prod sharevox -index 25 -t 早く寝てください！
+f:\sandbox>voxsay -prod sharevox -index 25 -t 早く寝てください！
 
-F:\Sandbox>
+f:\sandbox>
 ```
 
 音量が大きい気がしたので下げます。
 
 ```
-F:\Sandbox>voxsay -prod sharevox -index 25 -volume 0.5 -t 早く寝てください！
+f:\sandbox>voxsay -prod sharevox -index 25 -volume 0.5 -t 早く寝てください！
 
-F:\Sandbox>
+f:\sandbox>
 ```
 
 あとは各自オプションを試してください。
@@ -165,49 +170,66 @@ f:\sandbox>
 ```
 春日部つむぎにドレミファソラシドを歌ってもらいましょう。
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t o4cdefgabo5c
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t O4DEFFGABO5C
 
 f:\sandbox>
 ```
 -t オプションで MMLを指定する事で歌唱が可能になります。ただし正確な実装ではありません。それらしいように仕上げただけです。
 
-| マクロ     | 説明                                              | 指定例 | デフォルト |
-|------------|---------------------------------------------------|--------|------------|
-| Tnum       | テンポを指定。範囲は30～、上限は確認していない。  | T60 → テンポ(BPM)に60を指定  |  T120  |
-| Onum       | オクターブ指定。範囲は0～9                        | O5 → オクターブを5に指定     |  O4    |
-| Lnum       | 休符、音符のデフォルト長指定。1,2,4,8,16,32のみ指定できる。 | L8→デフォルトの音符を8分音符、休符を8分休符に設定  | L4  |
-| R[num]     | 休符。休符の長さを指定する時は1,2,4,8,16,32から選択する。   | R4→4分休符の指定                                   |     |
-| [CDEFGAB]num[#-]  | 音符。C～Bがド～シに対応。音符の長さを指定する時は1,2,4,8,16,32から選択する。#を付けると半音上げ、-を付けると半音下げ  | C16→ドを16分休符で指定 |   |
+| マクロ         | 説明                                                                                                 | 指定例                        | デフォルト |
+|----------------|------------------------------------------------------------------------------------------------------|-------------------------------|------------|
+| T<num>         | テンポを指定。範囲は30～800 上限は多分800くらい。                                                    | T60 → テンポ(BPM)に60を指定  | T120       |
+| O<num>         | オクターブ指定。範囲は0～9                                                                           | O5 → オクターブを5に指定     | O4         |
+| L<num>         | 休符・音符のデフォルト長指定。1,2,4,8,16,32のみ指定できる。                                          | L8→音符・休符のデフォルトを8分音符・休符に設定  | L4  |
+| R[num][.]      | 休符。長さ指定時は1,2,4,8,16,32から選択。"."を付けると付点休符。                                     | R4→4分休符の指定             |            |
+| C[num][.][#]   | 音符。ドに対応。長さ指定時は1,2,4,8,16,32から選択。"."を付けると付点音符。#を付けると半音上げ                         | C  →ドを指定                 |            |
+| D[num][.][#-]  | 音符。レに対応。長さ指定時は1,2,4,8,16,32から選択。"."を付けると付点音符。#を付けると半音上げ、-を付けると半音下げ    | D. →レを付点音符で指定       |            |
+| E[num][.][-]   | 音符。ミに対応。長さ指定時は1,2,4,8,16,32から選択。"."を付けると付点音符。-を付けると半音下げ                         | E8 →ミを8分音符で指定        |            |
+| F[num][.][#]   | 音符。ファに対応。長さ指定時は1,2,4,8,16,32から選択。"."を付けると付点音符。#を付けると半音上げ                       | F4. →ファを付点4分音符で指定 |            |
+| G[num][.][#-]  | 音符。ソに対応。長さ指定時は1,2,4,8,16,32から選択。"."を付けると付点音符。#を付けると半音上げ、-を付けると半音下げ    | G#  →ソを半音上げ指定        |            |
+| A[num][.][#-]  | 音符。ラに対応。長さ指定時は1,2,4,8,16,32から選択。"."を付けると付点音符。#を付けると半音上げ、-を付けると半音下げ    | A16.# →ラを付点16分音符で半音上げ指定  |            |
+| B[num][.][-]   | 音符。シに対応。長さ指定時は1,2,4,8,16,32から選択。"."を付けると付点音符。-を付けると半音下げ                         | B.-   →シを付点音符で半音下げ指定      |            |
 
-
-
-ちゃんと歌詞を付けたい？音符にひらがなを割当てて歌唱させることができます。
+ちゃんと歌詞を付けたい？歌詞の後にコロン(:)で音符を続けると、歌詞を割当てて歌唱させることができます。
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t かしをわりあてる:o4cdefgabo5c
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t かしをわりあてる:O4DEFFGABO5C
 
 f:\sandbox>
 ```
 音符の出現順にひらがなもしくはカタカナを割り当てます。漢字や英数字はダメです。
 
+| 歌詞    | 音符  |
+|-----------------|
+| か      | C     |
+| し      | D     |
+| を      | E     |
+| わ      | F     |
+| り      | G     |
+| あ      | A     |
+| て      | B     |
+| る      | C ※1オクターブ上  |
+
+
 長すぎて対応が取れなくなる？カンマで区切って整形する事が出来ます。
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t o4, かしを:cde, わりあてる:fgabo5c
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t O4, かしを:CDE, わりあてる:FGABO5C
 
 f:\sandbox>
 ```
 小節単位で区切るなどすると分かりやすいかもしれません。
 
 
-### 使用しているサードパーティライブラリとライセンス
 
-#### Fody
+## 使用しているサードパーティライブラリとライセンス
+
+### Fody
 
 以下は各ライセンスで提供されています。
 
 - Costura.Fody	5.7.0	geertvanhorrik,simoncropp	MIT
 - Fody	6.8.0	Fody	https://www.nuget.org/packages/Fody/6.8.0/license
 
-#### NAudio
+### NAudio
 
 以下は各ライセンスで提供されています。
 
@@ -219,7 +241,7 @@ f:\sandbox>
 - NAudio.WinForms	2.2.0	Mark Heath	MIT
 - NAudio.WinMM	2.2.0	WinMM	MIT
 
-#### Microsoft
+### Microsoft
 
 以下は MITライセンスもしくは https://dotnet.microsoft.com/ja-jp/dotnet_library_license.htm で示すライセンスで提供されています。
 
