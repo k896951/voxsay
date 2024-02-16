@@ -99,28 +99,36 @@ namespace voxsaycmd
                 // とりあえずの呼び出し処理を追加
                 if (opt.RenderingMode=="sing")
                 {
-                    var obj = new NoteGenerator();
-                    var mynotes = obj.ParseSingString(opt.TalkText);
-
-                    if(opt.ExportNote)
+                    try
                     {
-                        var str = obj.ExportNotes(mynotes);
-                        File.WriteAllText(@".\MyScore.json", str);
+                        var obj = new NoteGenerator();
+                        var mynotes = obj.ParseSingString(opt.TalkText);
+
+                        if (opt.ExportNote)
+                        {
+                            var str = obj.ExportNotes(mynotes);
+                            File.WriteAllText(@".\MyScore.json", str);
+                        }
+
+                        if (opt.SaveFile != null)
+                        {
+                            string f = opt.SaveFile;
+                            Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
+
+                            if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
+
+                            if (!api.SaveSong((int)opt.Index, pm, mynotes, f)) rcd = 8;
+                        }
+                        else
+                        {
+                            if (!api.Sing((int)opt.Index, pm, mynotes)) rcd = 8;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(string.Format(@"sing error: {0}", e.Message));
                     }
 
-                    if (opt.SaveFile != null)
-                    {
-                        string f = opt.SaveFile;
-                        Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
-
-                        if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
-
-                        if (!api.SaveSong((int)opt.Index, pm, mynotes, f)) rcd = 8;
-                    }
-                    else
-                    {
-                        if (!api.Sing((int)opt.Index, pm, mynotes)) rcd = 8;
-                    }
                 }
                 else
                 {

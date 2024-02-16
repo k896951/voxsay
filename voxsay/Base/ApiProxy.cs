@@ -962,7 +962,7 @@ namespace voxsay
                 noteobj.Key = note.Key;
                 noteobj.Frame_Length = Convert.ToInt32(note.FrameLength);
 
-                if ((note.Lyric=="")&&(note.Note=="R"))
+                if ((note.Lyric == "") && (note.Note.Substring(0, 1) == "R"))
                 {
                     noteobj.Key = null;
                 }
