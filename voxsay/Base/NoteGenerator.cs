@@ -314,23 +314,11 @@ namespace voxsay
 
         private void ParseLyricString(string lyric, ref int noteindex, ref List<MyNoteInfo> mynotes)
         {
-            // 最初の音符を探す
-            while (mynotes[noteindex].Note == "R")
-            {
-                noteindex++;
-                if (noteindex > mynotes.Count) return;
-            }
-
+            // 歌詞分解実施
+            List<string> lyricList = new List<string>();
+            int lyricIndex = 0;
             for (var idx = 0; idx < lyric.Length; idx++)
             {
-                // 休符をスキップする
-                while (mynotes[noteindex].Note == "R")
-                {
-                    noteindex++;
-                    if (noteindex > mynotes.Count) break;
-                }
-
-                // 音符に歌詞を割り当てる
                 string lyricChar = lyric[idx].ToString();
                 switch (lyricChar)
                 {
@@ -338,7 +326,6 @@ namespace voxsay
                     case "っ":
                     case "ッ":
                         // 促音、長音記号は割り当てない
-                        noteindex--;
                         break;
 
                     case "ゃ":
@@ -350,25 +337,34 @@ namespace voxsay
                         // 拗音文字は直前の音符の歌詞に加える
                         if (idx >= 1)
                         {
-                            mynotes[noteindex - 1].Lyric += lyricChar;
-                            noteindex--;
+                            lyricList[lyricIndex - 1] += lyricChar;
                         }
                         else
                         {
-                            mynotes[noteindex].Lyric = lyricChar;
+                            lyricList[lyricIndex] += lyricChar;
+                            lyricIndex++;
                         }
                         break;
 
                     default:
-                        // 音符に歌詞を割り当てる
-                        mynotes[noteindex].Lyric = lyricChar;
+                        lyricList.Add(lyricChar);
+                        lyricIndex++;
                         break;
+                }
+            }
 
+            foreach (var item in lyricList)
+            {
+                // 休符をスキップする
+                while (mynotes[noteindex].Note == "R")
+                {
+                    noteindex++;
+                    if (noteindex >= mynotes.Count) break;
                 }
 
+                // 音符に歌詞を割り当てる
+                mynotes[noteindex].Lyric = item;
                 noteindex++;
-                if (noteindex >= mynotes.Count) break; // 音符の数より文字数が多いならここで割り当てを終了する
-
             };
 
         }
