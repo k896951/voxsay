@@ -340,6 +340,8 @@ namespace voxsay
 
         private List<string> ParseLyricString(string lyric)
         {
+            string lyricParentChars = "きキぎギしじシジちチぢヂにニひヒびビぴピみミ";
+
             List<string> lyricList = new List<string>();
             int lyricIndex = 0;
 
@@ -361,15 +363,34 @@ namespace voxsay
                     case "ょ":
                     case "ョ":
                         // 拗音文字は直前の音符の歌詞に加える
-                        if (idx >= 1)
+                        if (idx == 0)
                         {
-                            lyricList[lyricIndex - 1] += lyricChar;
+                            // 最初の文字だからとりあえず単独登録
+                            lyricList.Add(lyricChar);
+                            lyricIndex++;
                         }
                         else
                         {
-                            // 最初の文字だからとりあえず単独で切り出す
-                            lyricList[lyricIndex] = lyricChar;
-                            lyricIndex++;
+                            if(lyricList[lyricIndex - 1].Length > 1)
+                            {
+                                // 直前の歌詞が1文字より長ければ結合しない
+                                lyricList.Add(lyricChar);
+                                lyricIndex++;
+                            }
+                            else if (lyricList[lyricIndex - 1].Length == 1)
+                            {
+                                if (lyricParentChars.Contains(lyricList[lyricIndex - 1]))
+                                {
+                                    // 直前の歌詞が1文字で拗音文字を付与できる文字なら結合する
+                                    lyricList[lyricIndex - 1] += lyricChar;
+                                }
+                                else
+                                {
+                                    // 直前の歌詞が1文字で拗音文字を付与できない文字は単独にする
+                                    lyricList.Add(lyricChar);
+                                    lyricIndex++;
+                                }
+                            }
                         }
                         break;
 
