@@ -513,8 +513,9 @@ namespace voxsay
                             else
                             {
                                 // 音符が分割される場合
+                                var targetNoteFrameLength = mynotes[noteIndex].FrameLength;
                                 int dividedNoteFrameLength = Convert.ToInt32(mynotes[noteIndex].FrameLength / lyriclist[lyricindex].Count);
-
+                                int difflen = Convert.ToInt32( targetNoteFrameLength - (lyriclist[lyricindex].Count * dividedNoteFrameLength ));
 
                                 // clone()を実装しないので
                                 var FrameLength = mynotes[noteIndex].FrameLength;
@@ -542,6 +543,7 @@ namespace voxsay
 
                                     noteIndex++;
                                 }
+                                mynotes[noteIndex - 1].FrameLength += difflen;
 
                                 lyricindex++;
                             }
