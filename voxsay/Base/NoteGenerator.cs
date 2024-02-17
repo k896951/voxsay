@@ -1,7 +1,9 @@
-﻿using NAudio.Gui;
+﻿using NAudio.CoreAudioApi;
+using NAudio.Gui;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
 using System.Text;
@@ -152,7 +154,7 @@ namespace voxsay
             List<MyNoteInfo> mynoteinfo = new List<MyNoteInfo>();
             List<MyNoteInfo> notelist;
             List<MyMMLInfo> mmllist;
-            List<string> lyriclist;
+            List<List<string>> lyriclist;
 
             foreach (var measure in Regex.Split(singtext, @"[,]"))
             {
@@ -247,7 +249,7 @@ namespace voxsay
                 // MMLマクロの書式に合致しないならエラー
                 if (!Regex.IsMatch(localMML.Substring(pos), MacroMatchReg ))
                 {
-                    throw new Exception(string.Format(@"column {0}, '{1}' is unknown.", pos + 1, localMML.Substring(pos, 1)));
+                    throw new Exception(string.Format(@"mml Part column {0}, '{1}' is unknown.", pos + 1, localMML.Substring(pos, 1)));
                 }
 
                 // MML要素生成
@@ -280,7 +282,7 @@ namespace voxsay
                 {
                     case "T":
                         // テンポの変更
-                        if(dot || keyModify || !num) throw new Exception(string.Format(@"mmlpart column {0}, {1} is syntax error.", pos + 1, token));
+                        if(dot || keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, {1} is syntax error.", pos + 1, token));
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localTempo);
 
@@ -290,11 +292,11 @@ namespace voxsay
 
                     case "O":
                         // オクターブの変更（基準キー位置の変更）
-                        if (dot || keyModify || !num) throw new Exception(string.Format(@"mmlpart column {0}, {1} is syntax error.", pos + 1, token));
+                        if (dot || keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, {1} is syntax error.", pos + 1, token));
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localOctave);
 
-                        if (!OctaveToKeyMap.ContainsKey(localOctave)) throw new Exception(string.Format(@"mmlpart column {0}, {1} is out of range.", pos + 2, localOctave));
+                        if (!OctaveToKeyMap.ContainsKey(localOctave)) throw new Exception(string.Format(@"mml Part column {0}, {1} is out of range.", pos + 2, localOctave));
 
                         Octave = localOctave;
                         mml.Tempo = localOctave;
@@ -302,11 +304,11 @@ namespace voxsay
 
                     case "L":
                         // 音符・休符のデフォルト長変更
-                        if (keyModify || !num) throw new Exception(string.Format(@"mmlpart column {0}, {1} is syntax error.", pos + 1, token));
+                        if (keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, {1} is syntax error.", pos + 1, token));
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localDefaultNoteLen);
 
-                        if (!NoteLengthToFrameLengthMap.ContainsKey(localDefaultNoteLen)) throw new Exception(string.Format(@"mmlpart column {0}, {1} is out of range.", pos + 2, localDefaultNoteLen));
+                        if (!NoteLengthToFrameLengthMap.ContainsKey(localDefaultNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, {1} is out of range.", pos + 2, localDefaultNoteLen));
 
                         DefaultNoteLen = localDefaultNoteLen;
                         break;
@@ -320,12 +322,12 @@ namespace voxsay
                     case "A":
                     case "B":
                         var note = Regex.Replace(token, MacroNoteLenMatchReg, ""); // 長さ指定を消した物
-                        if ((macro == "R") && keyModify) throw new Exception(string.Format(@"mmlpart column {0}, {1} is syntax error.", pos + 1, note));
-                        if ((macro != "R") && (!NoteToKeyDispMap.ContainsKey(note))) throw new Exception(string.Format(@"mmlpart column {0}, {1} is unknown note.", pos + 1, note));
+                        if ((macro == "R") && keyModify) throw new Exception(string.Format(@"mml Part column {0}, {1} is syntax error.", pos + 1, note));
+                        if ((macro != "R") && (!NoteToKeyDispMap.ContainsKey(note))) throw new Exception(string.Format(@"mml Part column {0}, {1} is unknown note.", pos + 1, note));
 
                         var localNoteLen = DefaultNoteLen;
                         if (num) int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localNoteLen);
-                        if (!NoteLengthToFrameLengthMap.ContainsKey(localNoteLen)) throw new Exception(string.Format(@"mmlpart column {0}, {1} is out of range.", pos + 2, localNoteLen));
+                        if (!NoteLengthToFrameLengthMap.ContainsKey(localNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, {1} is out of range.", pos + 2, localNoteLen));
 
                         mml.MacroName = note;
                         mml.NoteLen = localNoteLen;
@@ -338,68 +340,108 @@ namespace voxsay
             return mmlInfo;
         }
 
-        private List<string> ParseLyricString(string lyric)
+        
+        
+        private List<List<string>> AggregationLyrics(List<MyLyricInfo> list)
         {
-            string lyricParentChars = "きキぎギしじシジちチぢヂにニひヒびビぴピみミ";
+            List<List<string>> parsedlist = new List<List<string>>();
 
-            List<string> lyricList = new List<string>();
-            int lyricIndex = 0;
+            string lyricGroupingStart = "（(";
+            string lyricGroupingClose = ")）";
+            int index = 0;
 
-            for (var idx = 0; idx < lyric.Length; idx++)
+            for(index = 0; index < list.Count; index++)
             {
-                string lyricChar = lyric[idx].ToString();
-                switch (lyricChar)
-                {
-                    case "ー":
-                    case "っ":
-                    case "ッ":
-                        // 促音、長音記号は割り当てない
-                        break;
+                parsedlist.Add(new List<string>());
 
-                    case "ゃ":
-                    case "ャ":
-                    case "ゅ":
-                    case "ュ":
-                    case "ょ":
-                    case "ョ":
-                        // 拗音文字は直前の音符の歌詞に加える
-                        if (idx == 0)
+                if (!lyricGroupingStart.Contains(list[index].Lyric) && !lyricGroupingClose.Contains(list[index].Lyric))
+                {
+                    // 開始カッコ、閉じカッコではない
+                    parsedlist[parsedlist.Count - 1].Add(list[index].Lyric);
+                }
+                else if (lyricGroupingClose.Contains(list[index].Lyric))
+                {
+                    // 開始カッコの前に閉じカッコが来た
+                    throw new Exception(string.Format(@"lyric Part column {0}, {1} is syntax error.", list[index].Column + 1, list[index].Lyric));
+                }
+                else
+                {
+                    // 開始カッコが来た
+
+                    int spos = index;
+                    int epos = index;
+
+                    while (epos < list.Count)
+                    {
+                        if (!lyricGroupingClose.Contains(list[epos].Lyric))
                         {
-                            // 最初の文字だからとりあえず単独登録
-                            lyricList.Add(lyricChar);
-                            lyricIndex++;
+                            //  ( ... ) を処理
+                            var fff = list.Where((v, idx) => idx > spos).ToList();
+
+                            foreach (var item in list.Where((v, idx) => idx > spos).ToList())
+                            {
+                                epos++;
+
+                                if (lyricGroupingClose.Contains(item.Lyric)) break;
+
+                                if (lyricGroupingStart.Contains(item.Lyric))
+                                {
+                                    // 閉じカッコに来る前にまた開始カッコが来た
+                                    throw new Exception(string.Format(@"lyric Part column {0}, {1} is syntax error.", item.Column + 1, item.Lyric));
+                                }
+
+                                parsedlist[parsedlist.Count - 1].Add(item.Lyric);
+                            }
+
+                            index = epos;
+
+                            break;
                         }
                         else
                         {
-                            if(lyricList[lyricIndex - 1].Length > 1)
-                            {
-                                // 直前の歌詞が1文字より長ければ結合しない
-                                lyricList.Add(lyricChar);
-                                lyricIndex++;
-                            }
-                            else if (lyricList[lyricIndex - 1].Length == 1)
-                            {
-                                if (lyricParentChars.Contains(lyricList[lyricIndex - 1]))
-                                {
-                                    // 直前の歌詞が1文字で拗音文字を付与できる文字なら結合する
-                                    lyricList[lyricIndex - 1] += lyricChar;
-                                }
-                                else
-                                {
-                                    // 直前の歌詞が1文字で拗音文字を付与できない文字は単独にする
-                                    lyricList.Add(lyricChar);
-                                    lyricIndex++;
-                                }
-                            }
+                            epos++;
                         }
-                        break;
-
-                    default:
-                        lyricList.Add(lyricChar);
-                        lyricIndex++;
-                        break;
+                    }
                 }
             }
+
+            return parsedlist;
+        }
+
+
+        private List<List<string>> ParseLyricString(string lyric)
+        {
+            string lyricParentChars2 = @"[きキぎギ][ゃャゅュょョ]ー{0,1}|" +
+                                       @"[しじシジ][ゃャゅュょョ]ー{0,1}|" +
+                                       @"[ちチぢヂ][ゃャゅュょョ]ー{0,1}|" +
+                                       @"[にニ][ゃャゅュょョ]ー{0,1}|" +
+                                       @"[ひヒびビぴピ][ゃャゅュょョ]ー{0,1}|" +
+                                       @"[みミ][ゃャゅュょョ]ー{0,1}|" +
+                                       @".";
+            string lyricParentChars3 = @"[ーっッ]";
+
+            int lyricposition = 0;
+            var planelist = new List<MyLyricInfo>();
+
+            var lp = Regex.Matches(lyric, lyricParentChars2).GetEnumerator();
+            while (lp.MoveNext())
+            {
+                string lyricChar = Regex.Replace(lp.Current.ToString(), lyricParentChars3, "");
+
+                if (lyricChar != "")
+                {
+                    MyLyricInfo mylyric = new MyLyricInfo
+                    {
+                        Column = lyricposition,
+                        Lyric = lyricChar
+                    };
+                    lyricposition += lp.Current.ToString().Length;
+
+                    planelist.Add(mylyric);
+                }
+            }
+
+            var lyricList = AggregationLyrics(planelist);
 
             return lyricList;
         }
@@ -437,31 +479,79 @@ namespace voxsay
             return mynotes;
         }
 
-        private void AssignLyricToMyNoteInfo(ref List<string> lyriclist, ref List<MyNoteInfo> mynotes)
+        private void AssignLyricToMyNoteInfo(ref List<List<string>> lyriclist, ref List<MyNoteInfo> mynotes)
         {
             int lyricindex = 0;
+            int noteIndex = 0;
 
             if (lyriclist.Count == 0) return;
 
-            foreach (var item in mynotes)
+            while (noteIndex < mynotes.Count)
             {
-                string macro = item.Note.Substring(0, 1);
+                string macro = mynotes[noteIndex].Note.Substring(0, 1);
                 switch (macro) {
                     case "T":
                     case "O":
                     case "L":
+                        noteIndex++;
+                        break;
+
                     case "R":
-                        continue;
+                        noteIndex++;
+                        break;
 
                     default:
                         // C～Bの音符に歌詞を割り当てる
                         if(lyriclist.Count > lyricindex)
                         {
-                            item.Lyric = lyriclist[lyricindex++];
+                            if (lyriclist[lyricindex].Count == 1)
+                            {
+                                // 音符を分割しない場合
+                                mynotes[noteIndex].Lyric = lyriclist[lyricindex++][0];
+                                noteIndex++;
+                            }
+                            else
+                            {
+                                // 音符が分割される場合
+                                int dividedNoteFrameLength = Convert.ToInt32(mynotes[noteIndex].FrameLength / lyriclist[lyricindex].Count);
+
+
+                                // clone()を実装しないので
+                                var FrameLength = mynotes[noteIndex].FrameLength;
+                                var Key = mynotes[noteIndex].Key;
+                                var Lyric = mynotes[noteIndex].Lyric;
+                                var Note = mynotes[noteIndex].Note;
+
+                                // 音符追加
+                                for (int cnt = 0; cnt < (lyriclist[lyricindex].Count - 1); cnt++)
+                                {
+                                    var newNote = new MyNoteInfo();
+                                    newNote.FrameLength = FrameLength;
+                                    newNote.Key = Key;
+                                    newNote.Lyric = Lyric;
+                                    newNote.Note = Note;
+
+                                    mynotes.Insert(noteIndex, newNote);
+                                }
+
+                                // フレーム長と歌詞の再割り当て
+                                for (int cnt = 0; cnt < lyriclist[lyricindex].Count; cnt++)
+                                {
+                                    mynotes[noteIndex].Lyric = lyriclist[lyricindex][cnt];
+                                    mynotes[noteIndex].FrameLength = dividedNoteFrameLength;
+
+                                    noteIndex++;
+                                }
+
+                                lyricindex++;
+                            }
+                        }
+                        else
+                        {
+                            noteIndex++;
                         }
                         break; 
                 }
-
             }
         }
 

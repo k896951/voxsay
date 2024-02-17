@@ -247,6 +247,7 @@
     <Compile Include="Base\Coeiroink\Coeiroinkv2Prosody.cs" />
     <Compile Include="Base\Coeiroink\Coeiroinkv2ProsodyDetail.cs" />
     <Compile Include="Base\Coeiroink\Coeiroinkv2StyleidToSpeakerMeta.cs" />
+    <Compile Include="Base\MyLyricInfo.cs" />
     <Compile Include="Base\MyMMLInfo.cs" />
     <Compile Include="Base\Sapi\SapiParams.cs" />
     <Compile Include="Base\SpeakerParams.cs" />
