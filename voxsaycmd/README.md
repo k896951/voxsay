@@ -170,7 +170,7 @@ f:\sandbox>
 ```
 春日部つむぎにドレミファソラシドを歌ってもらいましょう。
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t O4DEFFGABO5C
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t O4CDEFGABO5C
 
 f:\sandbox>
 ```
@@ -192,7 +192,7 @@ f:\sandbox>
 
 ちゃんと歌詞を付けたい？歌詞の後にコロン(:)で音符を続けると、歌詞を割当てて歌唱させることができます。
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t かしをわりあてる:O4DEFFGABO5C
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t かしをわりあてる:O4CDEFGABO5C
 
 f:\sandbox>
 ```
