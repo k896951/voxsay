@@ -170,7 +170,7 @@ f:\sandbox>
 ```
 春日部つむぎにドレミファソラシドを歌ってもらいましょう。
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t O4DEFFGABO5C
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t O4CDEFGABO5C
 
 f:\sandbox>
 ```
