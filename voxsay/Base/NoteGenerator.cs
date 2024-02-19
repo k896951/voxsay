@@ -1,12 +1,7 @@
-﻿using NAudio.CoreAudioApi;
-using NAudio.Gui;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Runtime.Serialization.Json;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using voxsay.Base.VoiceVox;
@@ -15,23 +10,25 @@ namespace voxsay
 {
     public class NoteGenerator
     {
-        private int tempo;
-        private int octave;
-        private int notelen;
+        private int currentTempo;
+        private int currentOctave;
+        private int currentNotelen;
         private LyricParser lyricParser;
         private MMLParser mmlParser;
 
-        private const double FrameDurationParTick = 0.01;
+        private const double FrameDurationParTick = 0.01;    // 1フレーム 0.01秒
         private const double QuarterNoteFrameLength = 50.0;  // BPM=120
 
         private Dictionary<int, double> NoteLengthToFrameLengthMap = new Dictionary<int, double>()
         {
-            {  1, 200.0 },
-            {  2, 100.0 },
-            {  4,  50.0 },
-            {  8,  25.0 },
-            { 16,  12.5 },
-            { 32,   6.25}
+            {   1, 200.0   },
+            {   2, 100.0   },
+            {   4,  50.0   },
+            {   8,  25.0   },
+            {  16,  12.5   },
+            {  32,   6.25  },
+            {  64,   3.125 },
+            { 128,   1.5625}
         };
 
         private Dictionary<int, int> OctaveToKeyMap = new Dictionary<int, int>()
@@ -78,23 +75,25 @@ namespace voxsay
         {
             get
             {
-                return tempo;
+                return currentTempo;
             }
 
             set
             {
                 // たぶん800が限界
 
-                tempo = value;
+                currentTempo = value;
 
-                double magnification = Convert.ToDouble(60.0 / tempo) / FrameDurationParTick;
+                double magnification = Convert.ToDouble(60.0 / currentTempo) / FrameDurationParTick;
 
-                NoteLengthToFrameLengthMap[1] = magnification * 4;  // 　　全音符フレーム数
-                NoteLengthToFrameLengthMap[2] = magnification * 2;  // 　２分音符フレーム数
-                NoteLengthToFrameLengthMap[4] = magnification;      // 　４分音符フレーム数
-                NoteLengthToFrameLengthMap[8] = magnification / 2;  // 　８分音符フレーム数
-                NoteLengthToFrameLengthMap[16] = magnification / 4; // １６分音符フレーム数
-                NoteLengthToFrameLengthMap[32] = magnification / 8; // ３２分音符フレーム数
+                NoteLengthToFrameLengthMap[1]   = magnification *  4;  // 　　　全音符フレーム数
+                NoteLengthToFrameLengthMap[2]   = magnification *  2;  // 　　２分音符フレーム数
+                NoteLengthToFrameLengthMap[4]   = magnification;       // 　　４分音符フレーム数
+                NoteLengthToFrameLengthMap[8]   = magnification /  2;  // 　　８分音符フレーム数
+                NoteLengthToFrameLengthMap[16]  = magnification /  4;  // 　１６分音符フレーム数
+                NoteLengthToFrameLengthMap[32]  = magnification /  8;  // 　３２分音符フレーム数
+                NoteLengthToFrameLengthMap[64]  = magnification / 16;  // 　６４分音符フレーム数
+                NoteLengthToFrameLengthMap[128] = magnification / 32;  // １２８分音符フレーム数
             }
         }
 
@@ -102,12 +101,12 @@ namespace voxsay
         {
             get
             {
-                return octave;
+                return currentOctave;
             }
 
             set
             {
-                if (OctaveToKeyMap.ContainsKey(value)) octave = value;
+                if (OctaveToKeyMap.ContainsKey(value)) currentOctave = value;
             }
         }
 
@@ -115,14 +114,14 @@ namespace voxsay
         {
             get
             {
-                return notelen;
+                return currentNotelen;
             }
 
             set
             {
                 if (NoteLengthToFrameLengthMap.ContainsKey(value))
                 {
-                    notelen = value;
+                    currentNotelen = value;
                 }
             }
         }
@@ -130,8 +129,13 @@ namespace voxsay
 
         public NoteGenerator()
         {
+            // デフォルト T120, O4, L4 に設定
+
+            Bpm = 120;
+            Octave = 4;
+            DefaultNoteLen = 4;
+            mmlParser = new MMLParser(Bpm, Octave, DefaultNoteLen);
             lyricParser = new LyricParser();
-            mmlParser = new MMLParser(120, 4, 4); // T120, O4, L4
         }
 
         public List<MyNoteInfo> ParseSingString(string singtext)
@@ -170,8 +174,8 @@ namespace voxsay
                         var noteRinfo = new MyNoteInfo();
                         noteRinfo.Lyric = "";
                         noteRinfo.Note = "R";
-                        noteRinfo.Key = OctaveToKeyMap[octave];
-                        noteRinfo.FrameLength = 2; // NoteLengthToFrameLengthMap[DefaultNoteLen];
+                        noteRinfo.Key = OctaveToKeyMap[currentOctave];
+                        noteRinfo.FrameLength = 2;
                         mynoteinfo.Add(noteRinfo);
                     }
 
