@@ -189,7 +189,9 @@ namespace voxsay
                     throw new Exception(string.Format(@"measure:[{0}], {1}", measure.Trim(), e.Message), e);
                 }
             }
-
+#if DEBUG
+            PrintAssignInfo(mynoteinfo);
+#endif
             return mynoteinfo;
         }
 
@@ -225,7 +227,28 @@ namespace voxsay
 
             return ans;
         }
-        
+
+        public void PrintAssignInfo(List<MyNoteInfo> mynotes)
+        {
+            int noteindex = 0;
+            foreach (var note in mynotes)
+            {
+                switch(note.Note)
+                {
+                    case "R":
+                        Console.WriteLine(@"{0,4:D} {1} ( {2,6:D} )", noteindex, note.Note, Convert.ToInt32(note.FrameLength));
+                        break;
+
+                    default:
+                        Console.WriteLine(@"{0,4:D} {1} ( {2,6:D},  {3,3:D} ), text={4}", noteindex, note.Note, Convert.ToInt32(note.FrameLength), note.Key, note.Lyric + (note.defaultLyric ? "(default)" : "") );
+                        break;
+                }
+
+                noteindex++;
+            }
+
+        }
+
         private List<MyNoteInfo> GenMyNoteInfoFromMyMMLInfo(ref List<MyMMLInfo> mmllist)
         {
             List<MyNoteInfo> mynotes = new List<MyNoteInfo>();
@@ -254,6 +277,7 @@ namespace voxsay
 
                         noteItem.Note = item.MacroName;
                         noteItem.Lyric = item.SampleLyric;
+                        noteItem.defaultLyric = true;
 
                         noteItem.Key = OctaveToKeyMap[item.Octave] + (macro == "R" ? 0 : NoteToKeyDispMap[item.MacroName]);
                         noteItem.FrameLength = NoteLengthToFrameLengthMap[item.NoteLen];
@@ -295,6 +319,7 @@ namespace voxsay
                             {
                                 // 音符を分割しない場合
                                 mynotes[noteIndex].Lyric = lyriclist[lyricindex++][0];
+                                mynotes[noteIndex].defaultLyric = false;
                                 noteIndex++;
                             }
                             else
@@ -309,6 +334,7 @@ namespace voxsay
                                 var Key = mynotes[noteIndex].Key;
                                 var Lyric = mynotes[noteIndex].Lyric;
                                 var Note = mynotes[noteIndex].Note;
+                                var DefaultLyric = mynotes[noteIndex].defaultLyric;
 
                                 // 音符追加
                                 for (int cnt = 0; cnt < (lyriclist[lyricindex].Count - 1); cnt++)
@@ -318,6 +344,7 @@ namespace voxsay
                                     newNote.Key = Key;
                                     newNote.Lyric = Lyric;
                                     newNote.Note = Note;
+                                    newNote.defaultLyric = DefaultLyric;
 
                                     mynotes.Insert(noteIndex, newNote);
                                 }
@@ -327,6 +354,7 @@ namespace voxsay
                                 {
                                     mynotes[noteIndex].Lyric = lyriclist[lyricindex][cnt];
                                     mynotes[noteIndex].FrameLength = dividedNoteFrameLength;
+                                    mynotes[noteIndex].defaultLyric = false;
 
                                     noteIndex++;
                                 }
