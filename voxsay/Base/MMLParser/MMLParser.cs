@@ -126,7 +126,7 @@ namespace voxsay
                 // MMLマクロの書式に合致しないならエラー
                 if (!Regex.IsMatch(localMML.Substring(pos), MacroMatchReg))
                 {
-                    throw new Exception(string.Format(@"mml Part column {0}, '{1}' is unknown.", pos + 1, localMML.Substring(pos, 1)));
+                    throw new Exception(string.Format(@"mml Part column {0}, '{1}' は受け入れできないマクロです", pos + 1, localMML.Substring(pos, 1)));
                 }
 
                 // MML要素生成
@@ -159,7 +159,7 @@ namespace voxsay
                 {
                     case "T":
                         // テンポの変更
-                        if (dot || keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, {1} is syntax error.", pos + 1, token));
+                        if (dot || keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, テンポの指定 '{1}' は誤りです", pos + 1, token));
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localTempo);
 
@@ -169,11 +169,11 @@ namespace voxsay
 
                     case "O":
                         // オクターブの変更（基準キー位置の変更）
-                        if (dot || keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, {1} is syntax error.", pos + 1, token));
+                        if (dot || keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は誤りです", pos + 1, token));
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localOctave);
 
-                        if (!OctaveCheck(localOctave)) throw new Exception(string.Format(@"mml Part column {0}, {1} is out of range.", pos + 2, localOctave));
+                        if (!OctaveCheck(localOctave)) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は範囲外です", pos + 2, localOctave));
 
                         Octave = localOctave;
                         mml.Octave = localOctave;
@@ -181,11 +181,11 @@ namespace voxsay
 
                     case "L":
                         // 音符・休符のデフォルト長変更
-                        if (keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, {1} is syntax error.", pos + 1, token));
+                        if (keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, 長さの指定 '{1}' は誤りです", pos + 1, token));
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localDefaultNoteLen);
 
-                        if (!NoteLengthCheck(localDefaultNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, {1} is out of range.", pos + 2, localDefaultNoteLen));
+                        if (!NoteLengthCheck(localDefaultNoteLen)) throw new Exception(string.Format(@"mml Part column {0},  長さの指定 '{1}' は範囲外です", pos + 2, localDefaultNoteLen));
 
                         DefaultNoteLen = localDefaultNoteLen;
                         break;
@@ -199,12 +199,11 @@ namespace voxsay
                     case "A":
                     case "B":
                         var note = Regex.Replace(token, MacroNoteLenMatchReg, ""); // 長さ指定を消した物
-                        if ((macro == "R") && keyModify) throw new Exception(string.Format(@"mml Part column {0}, {1} is syntax error.", pos + 1, note));
-                        if ((macro != "R") && (!NoteCheck(note))) throw new Exception(string.Format(@"mml Part column {0}, {1} is unknown note.", pos + 1, note));
+                        if ( ((macro == "R") && keyModify) || ((macro != "R") && !NoteCheck(note)) ) throw new Exception(string.Format(@"mml Part column {0}, {1}にキー修飾指定 '{2}' はできません", pos + 1, macro, note));
 
                         var localNoteLen = DefaultNoteLen;
                         if (num) int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localNoteLen);
-                        if (!NoteLengthCheck(localNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, {1} is out of range.", pos + 2, localNoteLen));
+                        if (!NoteLengthCheck(localNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, 長さの指定 '{1}' は範囲外です", pos + 2, localNoteLen));
 
                         mml.MacroName = note;
                         mml.NoteLen = localNoteLen;
