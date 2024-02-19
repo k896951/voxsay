@@ -149,7 +149,7 @@ namespace voxsay
             {
                 try
                 {
-                    var parts = Regex.Split(measure.Trim(), @"[:]+");
+                    var parts = Regex.Split(measure.Trim(), @"[:：]+");
                     switch (parts.Length)
                     {
                         case 1: // MMLだけある場合
