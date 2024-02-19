@@ -20,24 +20,36 @@ namespace voxsay
                                    @"パピプペポ" +
                                    @"ぁぃぅぇぉゃゅょァィゥェォャュョーっッ" +
                                    @"\(（\)）" +
-                                   @" 　]";          // 空白(半角+全角)
+                                   @" 　\t]";          // タブ + 空白(半角 + 全角)
 
         private const string lyricParentChars2 =
-                                   @"[きキぎギ][ぇェゃャゅュょョ]ー{0,1}|" +
-                                   @"[しじシジ][ぇェゃャゅュょョ]ー{0,1}|" +
-                                   @"[すスずズ][ぃィ]ー{0,1}|" +
-                                   @"[ちチぢヂ][ぇェゃャゅュょョ]ー{0,1}|" +
-                                   @"[つツ][ぁァぃィぇェぉォ]ー{0,1}|" +
-                                   @"[てデ][ぃィ]ー{0,1}|" +
-                                   @"[とト][ぅゥ]ー{0,1}|" +
-                                   @"[にニ][ぇェゃャゅュょョ]ー{0,1}|" +
-                                   @"[ひヒびビぴピ][ぇェゃャゅュょョ]ー{0,1}|" +
-                                   @"[ふフ][ぁァぃィぇェぉォ]ー{0,1}|" +
-                                   @"[みミ][ぇェゃャゅュょョ]ー{0,1}|" +
-                                   @"[りリ][ぇェ]ー{0,1}|" +
+                                   @"[きぎ][ぇゃゅょ]ー{0,1}|" +
+                                   @"[キギ][ェャュョ]ー{0,1}|" +
+                                   @"[しじ][ぇゃゅょ]ー{0,1}|" +
+                                   @"[シジ][ェャュョ]ー{0,1}|" +
+                                   @"[すず][ぃ]ー{0,1}|" +
+                                   @"[スズ][ィ]ー{0,1}|" +
+                                   @"[ちぢ][ぇゃゅょ]ー{0,1}|" +
+                                   @"[チヂ][ェャュョ]ー{0,1}|" +
+                                   @"[つ][ぁぃぇぉ]ー{0,1}|" +
+                                   @"[ツ][ァィェォ]ー{0,1}|" +
+                                   @"[てで][ぃ]ー{0,1}|" +
+                                   @"[テデ][ィ]ー{0,1}|" +
+                                   @"[と][ぅ]ー{0,1}|" +
+                                   @"[ト][ゥ]ー{0,1}|" +
+                                   @"[に][ぇゃゅょ]ー{0,1}|" +
+                                   @"[ニ][ェャュョ]ー{0,1}|" +
+                                   @"[ひびぴ][ぇゃゅょ]ー{0,1}|" +
+                                   @"[ヒビピ][ェャュョ]ー{0,1}|" +
+                                   @"[ふ][ぁぃぇぉ]ー{0,1}|" +
+                                   @"[フ][ァィェォ]ー{0,1}|" +
+                                   @"[み][ぇゃゅょ]ー{0,1}|" +
+                                   @"[ミ][ェャュョ]ー{0,1}|" +
+                                   @"[り][ぇ]ー{0,1}|" +
+                                   @"[リ][ェ]ー{0,1}|" +
                                    @".";
 
-        private const string lyricParentChars3 = @"[ーっッ 　]";// 空白(半角+全角)含む
+        private const string lyricParentChars3 = @"[ーっッ 　\t]"; // タブ + 空白(半角 + 全角)含む
 
         private const string lyricGroupingOpen = @"（(";
         private const string lyricGroupingClose = @")）";
@@ -69,7 +81,7 @@ namespace voxsay
                     if(!lyricParentChars1ex.IsMatch(lyricChar))
                     {
                         // 歌詞として受け入れできない
-                        throw new Exception(string.Format(@"lyric Part column {0}, '{1}' not lyrics composition character.", lyricposition + 1, lyricChar));
+                        throw new Exception(string.Format(@"lyric Part column {0}, 歌詞として受け入れられない文字　'{1}' があります", lyricposition + 1, lyricChar));
                     }
                     MyLyricInfo mylyric = new MyLyricInfo
                     {
@@ -107,7 +119,7 @@ namespace voxsay
                 else if (lyricGroupingClose.Contains(list[index].Lyric))
                 {
                     // 開始カッコが現れる前に閉じカッコが来た
-                    throw new Exception(string.Format(@"lyric Part column {0}, '{1}' There is no opening parenthesis, but there is a closing parenthesis.", list[index].Column + 1, list[index].Lyric));
+                    throw new Exception(string.Format(@"lyric Part column {0},  閉じ括弧に対応する開き括弧がありません", list[index].Column + 1));
                 }
                 else if (lyricGroupingOpen.Contains(list[index].Lyric))
                 {
@@ -121,12 +133,12 @@ namespace voxsay
                     if (epos < 0)
                     {
                         // 閉じカッコが無いのでエラー
-                        throw new Exception(string.Format(@"lyric Part column {0}, '{1}' There is an opening parenthesis, but no closing parenthesis.", list[index].Column + 1, list[index].Lyric));
+                        throw new Exception(string.Format(@"lyric Part column {0}, 開き括弧に対応する閉じ括弧がありません", list[index].Column + 1));
                     }
                     if (epos == (spos + 1))
                     {
                         //括弧内に文字が無い
-                        throw new Exception(string.Format(@"lyric Part column {0}, '{1}' There are no lyrics in parentheses.", list[index].Column + 1, list[index].Lyric + ")" ));
+                        throw new Exception(string.Format(@"lyric Part column {0}, 開き括弧と閉じ括弧の間に歌詞がありません", list[index].Column + 1));
                     }
 
                     // 開き括弧と閉じ括弧の間の歌詞を処理
@@ -136,7 +148,7 @@ namespace voxsay
                         if (lyricGroupingOpen.Contains(list[index].Lyric))
                         {
                             // ネストはサポートしていない
-                            throw new Exception(string.Format(@"lyric Part column {0} - {1}, {2}{3} There is an opening parenthesis, but nesting is not supported.", list[spos].Column + 1, list[epos].Column + 1, list[spos].Lyric, list[epos].Lyric));
+                            throw new Exception(string.Format(@"lyric Part column {0} - {1}, {2}, 括弧のネストはサポートしていません", list[spos].Column + 1, list[epos].Column + 1, list[index].Column + 1));
                         }
 
                         parsedlist[parsedlist.Count - 1].Add(list[index].Lyric);
