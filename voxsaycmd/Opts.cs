@@ -29,6 +29,7 @@ namespace voxsaycmd
         public bool IsSafe { get; private set; } = false;
         public string RenderingMode { get; private set; } = null;
         public bool ExportNote { get; private set; } = false;
+        public bool PrintNote { get; private set; } = false;
 
         private string ConfFileNamee = @".\voxsayconf.json";
 
@@ -155,6 +156,10 @@ namespace voxsaycmd
 
                     case "-exportnote":
                         ExportNote = true;
+                        break;
+
+                    case "-printnote":
+                        PrintNote = true;
                         break;
 
                     case "-samplingrate":

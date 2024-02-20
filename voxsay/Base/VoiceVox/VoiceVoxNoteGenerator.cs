@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,7 +9,7 @@ using voxsay.Base.VoiceVox;
 
 namespace voxsay
 {
-    public class NoteGenerator
+    public class VoiceVoxNoteGenerator
     {
         private int currentTempo;
         private int currentOctave;
@@ -124,7 +125,7 @@ namespace voxsay
         }
 
 
-        public NoteGenerator()
+        public VoiceVoxNoteGenerator()
         {
             // デフォルト T120, O4, L4 に設定
 
@@ -186,9 +187,7 @@ namespace voxsay
                     throw new Exception(string.Format(@"measure:[{0}], {1}", measure.Trim(), e.Message), e);
                 }
             }
-#if DEBUG
-            PrintAssignInfo(mynoteinfo);
-#endif
+
             return mynoteinfo;
         }
 
@@ -230,14 +229,21 @@ namespace voxsay
             int noteindex = 0;
             foreach (var note in mynotes)
             {
+                var notelenStr = NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == note.FrameLength).Key.ToString();
+                if (notelenStr == "0")
+                {
+                    notelenStr = NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == (note.FrameLength / 1.5)).Key.ToString();
+                    notelenStr = notelenStr != "0" ? notelenStr + "." : "";
+                }
+
                 switch(note.Note)
                 {
                     case "R":
-                        Console.WriteLine(@"{0,4:D} {1} ( {2,6:D} )", noteindex, note.Note, Convert.ToInt32(note.FrameLength));
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} (---,{3,6:D})", noteindex, note.Note, notelenStr, Convert.ToInt32(note.FrameLength));
                         break;
 
                     default:
-                        Console.WriteLine(@"{0,4:D} {1} ( {2,6:D},  {3,3:D} ), text={4}", noteindex, note.Note, Convert.ToInt32(note.FrameLength), note.Key, note.Lyric + (note.defaultLyric ? "(default)" : "") );
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} ({3,3:D},{4,6:D}), text={5}", noteindex, note.Note, notelenStr, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
                         break;
                 }
 

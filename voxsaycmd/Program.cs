@@ -101,13 +101,17 @@ namespace voxsaycmd
                 {
                     try
                     {
-                        var obj = new NoteGenerator();
+                        var obj = new VoiceVoxNoteGenerator();
                         var mynotes = obj.ParseSingString(opt.TalkText);
 
                         if (opt.ExportNote)
                         {
-                            var str = obj.ExportNotes(mynotes);
-                            File.WriteAllText(@".\MyScore.json", str);
+                            File.WriteAllText(@".\MyScore.json", obj.ExportNotes(mynotes));
+                        }
+
+                        if (opt.PrintNote)
+                        {
+                            obj.PrintAssignInfo(mynotes);
                         }
 
                         if (opt.SaveFile != null)
