@@ -16,8 +16,7 @@ namespace voxsay
         private LyricParser lyricParser;
         private MMLParser mmlParser;
 
-        private const double FrameDurationParTick = 0.01;    // 1フレーム 0.01秒
-        private const double QuarterNoteFrameLength = 50.0;  // BPM=120
+        private const double FrameDuration = 0.010752688; // BPM=120時、1フレームの時間
 
         private Dictionary<int, double> NoteLengthToFrameLengthMap = new Dictionary<int, double>()
         {
@@ -80,20 +79,18 @@ namespace voxsay
 
             set
             {
-                // たぶん800が限界
-
                 currentTempo = value;
 
-                double magnification = Convert.ToDouble(60.0 / currentTempo) / FrameDurationParTick;
+                var framelength = (60.0 / currentTempo) / FrameDuration;
 
-                NoteLengthToFrameLengthMap[1]   = magnification *  4;  // 　　　全音符フレーム数
-                NoteLengthToFrameLengthMap[2]   = magnification *  2;  // 　　２分音符フレーム数
-                NoteLengthToFrameLengthMap[4]   = magnification;       // 　　４分音符フレーム数
-                NoteLengthToFrameLengthMap[8]   = magnification /  2;  // 　　８分音符フレーム数
-                NoteLengthToFrameLengthMap[16]  = magnification /  4;  // 　１６分音符フレーム数
-                NoteLengthToFrameLengthMap[32]  = magnification /  8;  // 　３２分音符フレーム数
-                NoteLengthToFrameLengthMap[64]  = magnification / 16;  // 　６４分音符フレーム数
-                NoteLengthToFrameLengthMap[128] = magnification / 32;  // １２８分音符フレーム数
+                NoteLengthToFrameLengthMap[1]   = framelength *  4;  // 　　　全音符フレーム数
+                NoteLengthToFrameLengthMap[2]   = framelength *  2;  // 　　２分音符フレーム数
+                NoteLengthToFrameLengthMap[4]   = framelength;       // 　　４分音符フレーム数
+                NoteLengthToFrameLengthMap[8]   = framelength /  2;  // 　　８分音符フレーム数
+                NoteLengthToFrameLengthMap[16]  = framelength /  4;  // 　１６分音符フレーム数
+                NoteLengthToFrameLengthMap[32]  = framelength /  8;  // 　３２分音符フレーム数
+                NoteLengthToFrameLengthMap[64]  = framelength / 16;  // 　６４分音符フレーム数
+                NoteLengthToFrameLengthMap[128] = framelength / 32;  // １２８分音符フレーム数
             }
         }
 
