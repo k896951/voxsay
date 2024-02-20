@@ -13,6 +13,9 @@ namespace voxsay
         private const string MacroKeyModifierMatchReg = @"[#+\-]";
         private const string MacroNoteLenMatchReg = @"\d{0,}\.{0,1}";
 
+        private const int MinBPM = 40;
+        private const int MaxBPM = 800;
+
         private int currentTempo;
         private int currentOctave;
         private int currentNotelen;
@@ -43,11 +46,23 @@ namespace voxsay
             { "B",  "し"}
         };
 
+        public MMLParser()
+        {
+            Bpm = 120;           // T120
+            Octave = 4;          // O4
+            DefaultNoteLen = 4;  // L4
+        }
+
         public MMLParser(int defaultTempo, int defaultOctave, int defaultNoteLen)
         {
-            this.currentTempo = defaultTempo;
-            this.currentOctave = defaultOctave;
-            this.currentNotelen = defaultNoteLen;
+
+            Bpm = 120;           // T120
+            Octave = 4;          // O4
+            DefaultNoteLen = 4;  // L4
+
+            Bpm = defaultTempo;
+            Octave = defaultOctave;
+            DefaultNoteLen = defaultNoteLen;
         }
 
         public int Bpm
@@ -59,7 +74,7 @@ namespace voxsay
 
             set
             {
-                currentTempo = value;
+                if ((value >= MinBPM) && (value <= MaxBPM)) currentTempo = value;
             }
         }
 
@@ -106,7 +121,7 @@ namespace voxsay
             return NoteToDefaultLyricMap.ContainsKey(note);
         }
 
-        private string NoteToDefaultLyric(string note)
+        private string NoteToSampleLyric(string note)
         {
             if (NoteCheck(note)) return NoteToDefaultLyricMap[note];
 
@@ -126,7 +141,7 @@ namespace voxsay
                 // MMLマクロの書式に合致しないならエラー
                 if (!Regex.IsMatch(localMML.Substring(pos), MacroMatchReg))
                 {
-                    throw new Exception(string.Format(@"mml Part column {0}, '{1}' は受け入れできないマクロです", pos + 1, localMML.Substring(pos, 1)));
+                    throw new Exception(string.Format(@"mml Part column {0}, '{1}' はサポートしていないマクロです", pos + 1, localMML.Substring(pos, 1)));
                 }
 
                 // MML要素生成
@@ -163,6 +178,8 @@ namespace voxsay
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localTempo);
 
+                        if ((MinBPM > localTempo) || (MaxBPM < localTempo)) throw new Exception(string.Format(@"mml Part column {0}, テンポに '{1}' が指定されましたが範囲は {2}～{3} です", pos + 1, localTempo, MinBPM, MaxBPM));
+
                         Bpm = localTempo;
                         mml.Tempo = localTempo;
                         break;
@@ -173,7 +190,7 @@ namespace voxsay
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localOctave);
 
-                        if (!OctaveCheck(localOctave)) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は範囲外です", pos + 2, localOctave));
+                        if (!OctaveCheck(localOctave)) throw new Exception(string.Format(@"mml Part column {0}, オクターブに '{1}' が指定されましたが範囲は 0～9 です", pos + 2, localOctave));
 
                         Octave = localOctave;
                         mml.Octave = localOctave;
@@ -185,7 +202,7 @@ namespace voxsay
 
                         int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localDefaultNoteLen);
 
-                        if (!NoteLengthCheck(localDefaultNoteLen)) throw new Exception(string.Format(@"mml Part column {0},  長さの指定 '{1}' は範囲外です", pos + 2, localDefaultNoteLen));
+                        if (!NoteLengthCheck(localDefaultNoteLen)) throw new Exception(string.Format(@"mml Part column {0},  長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 です", pos + 2, localDefaultNoteLen));
 
                         DefaultNoteLen = localDefaultNoteLen;
                         break;
@@ -203,11 +220,11 @@ namespace voxsay
 
                         var localNoteLen = DefaultNoteLen;
                         if (num) int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localNoteLen);
-                        if (!NoteLengthCheck(localNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, 長さの指定 '{1}' は範囲外です", pos + 2, localNoteLen));
+                        if (!NoteLengthCheck(localNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, 長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 です", pos + 2, localNoteLen));
 
                         mml.MacroName = note;
                         mml.NoteLen = localNoteLen;
-                        mml.SampleLyric = macro == "R" ? "" : NoteToDefaultLyric(macro);
+                        mml.SampleLyric = macro == "R" ? "" : NoteToSampleLyric(macro);
                         mml.WithDot = dot;
                         break;
                 }
