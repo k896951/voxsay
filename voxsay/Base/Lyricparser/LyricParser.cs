@@ -105,20 +105,32 @@ namespace voxsay
 
         private List<List<string>> AggregationLyricParts(List<MyLyricInfo> list)
         {
-            List<List<string>> parsedlist = new List<List<string>>();
+            List<List<string>> parsed1stlist = new List<List<string>>();
 
             int index = 0;
 
             // 分割した歌詞の集約
             for (index = 0; index < list.Count; index++)
             {
-                parsedlist.Add(new List<string>());
+                parsed1stlist.Add(new List<string>());
 
                 if (!lyricGroupingOpen.Contains(list[index].Lyric) && !lyricGroupingClose.Contains(list[index].Lyric))
                 {
-                    // 開始カッコでも閉じカッコでもないので単独文字として扱う
-                    var repedChar = lyricParentChars4ex.Replace(list[index].Lyric, "");
-                    if(repedChar!="") parsedlist[parsedlist.Count - 1].Add(repedChar);
+                    // 開始カッコでも閉じカッコでもないので単独文字として扱う。
+
+                    if (lyricParentChars4ex.IsMatch(list[index].Lyric))
+                    {
+                        // 先頭の促音文字なら適用を許す。
+                        if (index == 0)
+                        {
+                            parsed1stlist[parsed1stlist.Count - 1].Add(list[index].Lyric);
+                        }
+                    }
+                    else
+                    {
+                        parsed1stlist[parsed1stlist.Count - 1].Add(lyricParentChars4ex.Replace(list[index].Lyric, ""));
+                    }
+
                 }
                 else if (lyricGroupingClose.Contains(list[index].Lyric))
                 {
@@ -160,19 +172,19 @@ namespace voxsay
                             if ((spos + 1) == index)
                             {
                                 // 文字列最初の促音文字は残す
-                                parsedlist[parsedlist.Count - 1].Add(list[index].Lyric);
+                                parsed1stlist[parsed1stlist.Count - 1].Add(list[index].Lyric);
                             }
                         }
                         else
                         {
-                            parsedlist[parsedlist.Count - 1].Add(list[index].Lyric);
+                            parsed1stlist[parsed1stlist.Count - 1].Add(list[index].Lyric);
                         }
                         index++;
                     }
                 }
             }
 
-            return parsedlist;
+            return parsed1stlist.Where(v=>v.Count != 0).ToList();
         }
 
     }
