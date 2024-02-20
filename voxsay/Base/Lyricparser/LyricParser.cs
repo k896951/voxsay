@@ -49,7 +49,8 @@ namespace voxsay
                                    @"[リ][ェ]ー{0,1}|" +
                                    @".";
 
-        private const string lyricParentChars3 = @"[ーっッ 　\t]"; // タブ + 空白(半角 + 全角)含む
+        private const string lyricParentChars3 = @"[ー 　\t]"; // タブ + 空白(半角 + 全角)含む
+        private const string lyricParentChars4 = @"[っッ]";
 
         private const string lyricGroupingOpen = @"（(";
         private const string lyricGroupingClose = @")）";
@@ -57,12 +58,14 @@ namespace voxsay
         private Regex lyricParentChars1ex;
         private Regex lyricParentChars2ex;
         private Regex lyricParentChars3ex;
+        private Regex lyricParentChars4ex;
 
         public LyricParser()
         {
             lyricParentChars1ex = new Regex(lyricParentChars1);
             lyricParentChars2ex = new Regex(lyricParentChars2);
             lyricParentChars3ex = new Regex(lyricParentChars3);
+            lyricParentChars4ex = new Regex(lyricParentChars4);
         }
 
         public List<List<string>> ParseLyricString(string lyric)
@@ -114,7 +117,8 @@ namespace voxsay
                 if (!lyricGroupingOpen.Contains(list[index].Lyric) && !lyricGroupingClose.Contains(list[index].Lyric))
                 {
                     // 開始カッコでも閉じカッコでもないので単独文字として扱う
-                    parsedlist[parsedlist.Count - 1].Add(list[index].Lyric);
+                    var repedChar = lyricParentChars4ex.Replace(list[index].Lyric, "");
+                    if(repedChar!="") parsedlist[parsedlist.Count - 1].Add(repedChar);
                 }
                 else if (lyricGroupingClose.Contains(list[index].Lyric))
                 {
@@ -135,7 +139,7 @@ namespace voxsay
                         // 閉じカッコが無いのでエラー
                         throw new Exception(string.Format(@"lyric Part column {0}, 開き括弧に対応する閉じ括弧がありません", list[index].Column + 1));
                     }
-                    if (epos == (spos + 1))
+                    if ((spos + 1) == epos)
                     {
                         //括弧内に文字が無い
                         throw new Exception(string.Format(@"lyric Part column {0}, 開き括弧と閉じ括弧の間に歌詞がありません", list[index].Column + 1));
@@ -151,7 +155,18 @@ namespace voxsay
                             throw new Exception(string.Format(@"lyric Part column {0} - {1}, {2}, 括弧のネストはサポートしていません", list[spos].Column + 1, list[epos].Column + 1, list[index].Column + 1));
                         }
 
-                        parsedlist[parsedlist.Count - 1].Add(list[index].Lyric);
+                        if (lyricParentChars4ex.IsMatch(list[index].Lyric))
+                        {
+                            if ((spos + 1) == index)
+                            {
+                                // 文字列最初の促音文字は残す
+                                parsedlist[parsedlist.Count - 1].Add(list[index].Lyric);
+                            }
+                        }
+                        else
+                        {
+                            parsedlist[parsedlist.Count - 1].Add(list[index].Lyric);
+                        }
                         index++;
                     }
                 }
