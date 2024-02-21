@@ -19,16 +19,24 @@ namespace voxsay
 
         private const double FrameDuration = 0.010752688; // BPM=120時、1フレームの時間
 
-        private Dictionary<int, double> NoteLengthToFrameLengthMap = new Dictionary<int, double>()
+        private Dictionary<string, double> NoteLengthToFrameLengthMap = new Dictionary<string, double>()
         {
-            {   1, 200.0   },
-            {   2, 100.0   },
-            {   4,  50.0   },
-            {   8,  25.0   },
-            {  16,  12.5   },
-            {  32,   6.25  },
-            {  64,   3.125 },
-            { 128,   1.5625}
+            {   "1.", 300.0    },
+            {   "1" , 200.0    },
+            {   "2.", 150.0    },
+            {   "2" , 100.0    },
+            {   "4.",  75.0    },
+            {   "4" ,  50.0    },
+            {   "8.",  37.5    },
+            {   "8" ,  25.0    },
+            {  "16.",  18.75   },
+            {  "16" ,  12.5    },
+            {  "32.",   9.375  },
+            {  "32" ,   6.25   },
+            {  "64.",   4.6875 },
+            {  "64",    3.125  },
+            { "128.",   2.34375},
+            { "128" ,   1.5625 }
         };
 
         private Dictionary<int, int> OctaveToKeyMap = new Dictionary<int, int>()
@@ -84,14 +92,22 @@ namespace voxsay
 
                 var framelength = (60.0 / currentTempo) / FrameDuration;
 
-                NoteLengthToFrameLengthMap[1]   = framelength *  4;  // 　　　全音符フレーム数
-                NoteLengthToFrameLengthMap[2]   = framelength *  2;  // 　　２分音符フレーム数
-                NoteLengthToFrameLengthMap[4]   = framelength;       // 　　４分音符フレーム数
-                NoteLengthToFrameLengthMap[8]   = framelength /  2;  // 　　８分音符フレーム数
-                NoteLengthToFrameLengthMap[16]  = framelength /  4;  // 　１６分音符フレーム数
-                NoteLengthToFrameLengthMap[32]  = framelength /  8;  // 　３２分音符フレーム数
-                NoteLengthToFrameLengthMap[64]  = framelength / 16;  // 　６４分音符フレーム数
-                NoteLengthToFrameLengthMap[128] = framelength / 32;  // １２８分音符フレーム数
+                NoteLengthToFrameLengthMap["1."]   = framelength * 4 * 1.5;  // 　　　付点全音符フレーム数
+                NoteLengthToFrameLengthMap["1"]    = framelength * 4;        // 　　　　　全音符フレーム数
+                NoteLengthToFrameLengthMap["2."]   = framelength * 2 * 1.5;  // 　　付点２分音符フレーム数
+                NoteLengthToFrameLengthMap["2"]    = framelength * 2;        // 　　　　２分音符フレーム数
+                NoteLengthToFrameLengthMap["4."]   = framelength * 1.5;      // 　　付点４分音符フレーム数
+                NoteLengthToFrameLengthMap["4"]    = framelength;            // 　　　　４分音符フレーム数
+                NoteLengthToFrameLengthMap["8."]   = framelength / 2 * 1.5;  // 　　付点８分音符フレーム数
+                NoteLengthToFrameLengthMap["8"]    = framelength / 2;        // 　　　　８分音符フレーム数
+                NoteLengthToFrameLengthMap["16."]  = framelength / 4 * 1.5;  // 　付点１６分音符フレーム数
+                NoteLengthToFrameLengthMap["16"]   = framelength / 4;        // 　　　１６分音符フレーム数
+                NoteLengthToFrameLengthMap["32."]  = framelength / 8 * 1.5;  // 　付点３２分音符フレーム数
+                NoteLengthToFrameLengthMap["32"]   = framelength / 8;        //　　 　３２分音符フレーム数
+                NoteLengthToFrameLengthMap["64."]  = framelength / 16 * 1.5; // 　付点６４分音符フレーム数
+                NoteLengthToFrameLengthMap["64"]   = framelength / 16;       // 　　　６４分音符フレーム数
+                NoteLengthToFrameLengthMap["128."] = framelength / 32 * 1.5; // 付点１２８分音符フレーム数
+                NoteLengthToFrameLengthMap["128"]  = framelength / 32;       // 　　１２８分音符フレーム数
             }
         }
 
@@ -117,7 +133,7 @@ namespace voxsay
 
             set
             {
-                if (NoteLengthToFrameLengthMap.ContainsKey(value))
+                if (NoteLengthToFrameLengthMap.ContainsKey(value.ToString()))
                 {
                     currentNotelen = value;
                 }
@@ -229,7 +245,7 @@ namespace voxsay
             int noteindex = 0;
             foreach (var note in mynotes)
             {
-                var notelenStr = NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == note.FrameLength).Key.ToString();
+                var notelenStr = NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == note.FrameLength).Key;
                 if (notelenStr == "0")
                 {
                     notelenStr = NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == (note.FrameLength / 1.5)).Key.ToString();
@@ -283,9 +299,10 @@ namespace voxsay
                         noteItem.defaultLyric = true;
 
                         noteItem.Key = OctaveToKeyMap[item.Octave] + (macro == "R" ? 0 : NoteToKeyDispMap[item.MacroName]);
-                        noteItem.FrameLength = NoteLengthToFrameLengthMap[item.NoteLen];
 
-                        if (item.WithDot) noteItem.FrameLength *= 1.5; // 付点音符・付点休符の時の補正
+                        var notelenStr = item.NoteLen.ToString() + (item.WithDot ? "." : "");
+                        noteItem.FrameLength = NoteLengthToFrameLengthMap[notelenStr];
+
                         break;
                 }
             }
