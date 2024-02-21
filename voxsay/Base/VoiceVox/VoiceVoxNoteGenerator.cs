@@ -243,7 +243,7 @@ namespace voxsay
                         break;
 
                     default:
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} ({3,3:D},{4,6:D}), text={5}", noteindex, note.Note, notelenStr, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} ({3,3:D},{4,6:D}), {5}", noteindex, note.Note, notelenStr, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
                         break;
                 }
 
