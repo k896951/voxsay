@@ -258,6 +258,10 @@ namespace voxsay
                         Console.WriteLine(@"{0,4:D} {1}{2,-4:G} (---,{3,6:D})", noteindex, note.Note, notelenStr, Convert.ToInt32(note.FrameLength));
                         break;
 
+                    case "N":
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} (---,{3,6:D}), {4}", noteindex, note.Note, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : ""));
+                        break;
+
                     default:
                         Console.WriteLine(@"{0,4:D} {1}{2,-4:G} ({3,3:D},{4,6:D}), {5}", noteindex, note.Note, notelenStr, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
                         break;
@@ -289,6 +293,14 @@ namespace voxsay
                         DefaultNoteLen = item.NoteLen;
                         break;
 
+                    case ">":
+                        Octave = item.Octave;
+                        break;
+
+                    case "<":
+                        Octave = item.Octave;
+                        break;
+
                     default:
                         // 音符・休符の生成
                         var noteItem = new MyNoteInfo();
@@ -297,8 +309,8 @@ namespace voxsay
                         noteItem.Note = item.MacroName;
                         noteItem.Lyric = item.SampleLyric;
                         noteItem.defaultLyric = true;
-
-                        noteItem.Key = OctaveToKeyMap[item.Octave] + (macro == "R" ? 0 : NoteToKeyDispMap[item.MacroName]);
+                        
+                        noteItem.Key = macro == "N" ? item.Key : OctaveToKeyMap[item.Octave] + (macro == "R" ? 0 : NoteToKeyDispMap[item.MacroName]);
 
                         var notelenStr = item.NoteLen.ToString() + (item.WithDot ? "." : "");
                         noteItem.FrameLength = NoteLengthToFrameLengthMap[notelenStr];

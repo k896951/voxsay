@@ -16,5 +16,6 @@ namespace voxsay
 
         public int Octave { get; set; }
 
+        public int Key { get; set; }
     }
 }

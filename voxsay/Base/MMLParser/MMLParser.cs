@@ -7,7 +7,7 @@ namespace voxsay
 {
     public class MMLParser
     {
-        private const string MacroMatchReg = @"^[TOLRCDEFGAB]\d{0,}\.{0,1}[#+\-]{0,1}";
+        private const string MacroMatchReg = @"^[TOLRCDEFGABN<>]\d{0,}\.{0,1}[#+\-]{0,1}";
         private const string MacroNumMatchReg = @"\d{1,}";
         private const string MacroDotMatchReg = @"\.";
         private const string MacroKeyModifierMatchReg = @"[#+\-]";
@@ -128,6 +128,11 @@ namespace voxsay
             return "";
         }
 
+        private bool KeyCheck(int key)
+        {
+            return ((-1 < key) && (key < 128));
+        }
+
         public List<MyMMLInfo> ParseMMLString(string mmlstr)
         {
             List<MyMMLInfo> mmlInfo = new List<MyMMLInfo>();
@@ -196,6 +201,24 @@ namespace voxsay
                         mml.Octave = localOctave;
                         break;
 
+                    case ">":
+                        // １オクターブ上げる（基準キー位置を上位へ変更）
+                        if (dot || keyModify || num) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は誤りです", pos + 1, token));
+                        if (!OctaveCheck(Octave+1)) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は上限以上になります", pos + 1, token));
+
+                        Octave++;
+                        mml.Octave = Octave;
+                        break;
+
+                    case "<":
+                        // １オクターブ下げる（基準キー位置を下位へ変更）
+                        if (dot || keyModify || num) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は誤りです", pos + 1, token));
+                        if (!OctaveCheck(Octave + 1)) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は下限以下になります", pos + 1, token));
+
+                        Octave--;
+                        mml.Octave = Octave;
+                        break;
+
                     case "L":
                         // 音符・休符のデフォルト長変更
                         if (keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, 長さの指定 '{1}' は誤りです", pos + 1, token));
@@ -205,6 +228,22 @@ namespace voxsay
                         if (!NoteLengthCheck(localDefaultNoteLen)) throw new Exception(string.Format(@"mml Part column {0},  長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 です", pos + 2, localDefaultNoteLen));
 
                         DefaultNoteLen = localDefaultNoteLen;
+                        break;
+
+                    case "N":
+                        // キー直接指定
+                        if (dot || keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, キーの指定 '{1}' は誤りです", pos + 1, token));
+
+                        int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localKey);
+
+                        if (!KeyCheck(localKey)) throw new Exception(string.Format(@"mml Part column {0},  キーに '{1}' が指定されましたが設定可能な値は 0～127 です", pos + 2, localKey));
+
+                        mml.MacroName = macro;
+                        mml.Key = localKey;
+                        mml.NoteLen = DefaultNoteLen;
+                        mml.SampleLyric = "ラ";
+                        mml.WithDot = false;
+
                         break;
 
                     case "R":
