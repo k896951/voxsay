@@ -18,7 +18,7 @@ namespace voxsay
 
         private int currentTempo;
         private int currentOctave;
-        private int currentNotelen;
+        private string currentNotelen;
 
         private Dictionary<string, string> NoteToDefaultLyricMap = new Dictionary<string, string>()
         {
@@ -48,17 +48,17 @@ namespace voxsay
 
         public MMLParser()
         {
-            Bpm = 120;           // T120
-            Octave = 4;          // O4
-            DefaultNoteLen = 4;  // L4
+            Bpm = 120;            // T120
+            Octave = 4;           // O4
+            DefaultNoteLen = "4"; // L4
         }
 
-        public MMLParser(int defaultTempo, int defaultOctave, int defaultNoteLen)
+        public MMLParser(int defaultTempo, int defaultOctave, string defaultNoteLen)
         {
 
-            Bpm = 120;           // T120
-            Octave = 4;          // O4
-            DefaultNoteLen = 4;  // L4
+            Bpm = 120;            // T120
+            Octave = 4;           // O4
+            DefaultNoteLen = "4"; // L4
 
             Bpm = defaultTempo;
             Octave = defaultOctave;
@@ -91,7 +91,7 @@ namespace voxsay
             }
         }
 
-        public int DefaultNoteLen
+        public string DefaultNoteLen
         {
             get
             {
@@ -100,7 +100,7 @@ namespace voxsay
 
             set
             {
-                if (NoteLengthCheck(value)) currentNotelen = value;
+                if (NoteLenCheck(value)) currentNotelen = value;
             }
         }
 
@@ -109,9 +109,9 @@ namespace voxsay
             return ((-1 < octave) && (octave < 10));
         }
 
-        private bool NoteLengthCheck(int notelen)
+        private bool NoteLenCheck(string notelen)
         {
-            int[] notelengthArray = { 1, 2, 4, 8, 16, 32, 64, 128 };
+            string[] notelengthArray = { "1", "1.", "2", "2.", "4", "4.", "8", "8.", "16", "16.", "32", "32.", "64", "64.", "128", "128." };
 
             return notelengthArray.Contains(notelen);
         }
@@ -163,7 +163,7 @@ namespace voxsay
                 // 数値の指定があるか否か
                 var num = Regex.IsMatch(token, MacroNumMatchReg);
 
-                // "."の指定があるか否か
+                // 付点(".")の指定があるか否か
                 var dot = Regex.IsMatch(token, MacroDotMatchReg);
 
                 // キー修飾(#,+,-)があるか否か
@@ -223,11 +223,13 @@ namespace voxsay
                         // 音符・休符のデフォルト長変更
                         if (keyModify || !num) throw new Exception(string.Format(@"mml Part column {0}, 長さの指定 '{1}' は誤りです", pos + 1, token));
 
-                        int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localDefaultNoteLen);
+                        var localDefaultNoteLen = Regex.Match(token, MacroNumMatchReg).Value;
+                        if (dot) localDefaultNoteLen += ".";
 
-                        if (!NoteLengthCheck(localDefaultNoteLen)) throw new Exception(string.Format(@"mml Part column {0},  長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 です", pos + 2, localDefaultNoteLen));
+                        if (!NoteLenCheck(localDefaultNoteLen)) throw new Exception(string.Format(@"mml Part column {0},  長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 かそれらに"".""を付与したものです", pos + 2, localDefaultNoteLen));
 
                         DefaultNoteLen = localDefaultNoteLen;
+                        mml.WithDot = dot;
                         break;
 
                     case "N":
@@ -241,7 +243,7 @@ namespace voxsay
                         mml.MacroName = macro;
                         mml.Key = localKey;
                         mml.NoteLen = DefaultNoteLen;
-                        mml.SampleLyric = "ラ";
+                        mml.SampleLyric = "ラ"; // とりあえずのサンプル歌詞
                         mml.WithDot = false;
 
                         break;
@@ -258,8 +260,10 @@ namespace voxsay
                         if ( ((macro == "R") && keyModify) || ((macro != "R") && !NoteCheck(note)) ) throw new Exception(string.Format(@"mml Part column {0}, {1}にキー修飾指定 '{2}' はできません", pos + 1, macro, note));
 
                         var localNoteLen = DefaultNoteLen;
-                        if (num) int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localNoteLen);
-                        if (!NoteLengthCheck(localNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, 長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 です", pos + 2, localNoteLen));
+                        if (num) localNoteLen = Regex.Match(token, MacroNumMatchReg).Value;
+                        if (dot) localNoteLen += ".";
+                        if (localNoteLen.EndsWith("..")) throw new Exception(string.Format(@"mml Part column {0}, L{1}が指定されているのに{2}へ付点(""."")を指定しました", pos + 2, DefaultNoteLen, macro));
+                        if (!NoteLenCheck(localNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, 長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 かそれらに"".""を付与したものです", pos + 2, localNoteLen));
 
                         mml.MacroName = note;
                         mml.NoteLen = localNoteLen;

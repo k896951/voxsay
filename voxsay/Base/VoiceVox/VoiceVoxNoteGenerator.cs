@@ -13,7 +13,7 @@ namespace voxsay
     {
         private int currentTempo;
         private int currentOctave;
-        private int currentNotelen;
+        private string currentNotelen;
         private LyricParser lyricParser;
         private MMLParser mmlParser;
 
@@ -124,7 +124,7 @@ namespace voxsay
             }
         }
 
-        public int DefaultNoteLen
+        public string DefaultNoteLen
         {
             get
             {
@@ -133,7 +133,7 @@ namespace voxsay
 
             set
             {
-                if (NoteLengthToFrameLengthMap.ContainsKey(value.ToString()))
+                if (NoteLengthToFrameLengthMap.ContainsKey(value))
                 {
                     currentNotelen = value;
                 }
@@ -147,7 +147,7 @@ namespace voxsay
 
             Bpm = 120;
             Octave = 4;
-            DefaultNoteLen = 4;
+            DefaultNoteLen = "4";
             mmlParser = new MMLParser(Bpm, Octave, DefaultNoteLen);
             lyricParser = new LyricParser();
         }
@@ -188,8 +188,9 @@ namespace voxsay
                         var noteRinfo = new MyNoteInfo();
                         noteRinfo.Lyric = "";
                         noteRinfo.Note = "R";
+                        noteRinfo.NoteLen = "";
                         noteRinfo.Key = OctaveToKeyMap[currentOctave];
-                        noteRinfo.FrameLength = 2;
+                        noteRinfo.FrameLength = 2; // 多分最小
                         mynoteinfo.Add(noteRinfo);
                     }
 
@@ -248,25 +249,18 @@ namespace voxsay
             int noteindex = 0;
             foreach (var note in mynotes)
             {
-                var notelenStr = NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == note.FrameLength).Key;
-                if (notelenStr == "0")
-                {
-                    notelenStr = NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == (note.FrameLength / 1.5)).Key.ToString();
-                    notelenStr = notelenStr != "0" ? notelenStr + "." : "";
-                }
-
                 switch(note.Note)
                 {
-                    case "R":
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} --- {3,6:D}", noteindex, note.Note, notelenStr, Convert.ToInt32(note.FrameLength));
-                        break;
-
                     case "N":
                         Console.WriteLine(@"{0,4:D} {1}{2,-4:G} --- {3,6:D} {4}", noteindex, note.Note, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : ""));
                         break;
 
+                    case "R":
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} {3,3:D} {4,6:D}", noteindex, note.Note, note.NoteLen, note.Key, Convert.ToInt32(note.FrameLength));
+                        break;
+
                     default:
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} {3,3:D} {4,6:D} {5}", noteindex, note.Note, notelenStr, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} {3,3:D} {4,6:D} {5}", noteindex, note.Note, note.NoteLen, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
                         break;
                 }
 
@@ -307,16 +301,14 @@ namespace voxsay
                     default:
                         // 音符・休符の生成
                         var noteItem = new MyNoteInfo();
-                        mynotes.Add(noteItem);
-
                         noteItem.Note = item.MacroName;
+                        noteItem.NoteLen = item.NoteLen;
                         noteItem.Lyric = item.SampleLyric;
                         noteItem.defaultLyric = true;
-                        
                         noteItem.Key = macro == "N" ? item.Key : OctaveToKeyMap[item.Octave] + (macro == "R" ? 0 : NoteToKeyDispMap[item.MacroName]);
+                        noteItem.FrameLength = NoteLengthToFrameLengthMap[noteItem.NoteLen];
 
-                        var notelenStr = item.NoteLen.ToString() + (item.WithDot ? "." : "");
-                        noteItem.FrameLength = NoteLengthToFrameLengthMap[notelenStr];
+                        mynotes.Add(noteItem);
 
                         break;
                 }

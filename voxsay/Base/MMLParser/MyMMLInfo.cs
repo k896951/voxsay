@@ -8,7 +8,7 @@ namespace voxsay
 
         public string SampleLyric { get; set; } = "";
 
-        public int NoteLen { get; set; }
+        public string NoteLen { get; set; }
 
         public Boolean WithDot { get; set; } = false;
 
