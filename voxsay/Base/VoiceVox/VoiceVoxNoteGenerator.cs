@@ -242,6 +242,9 @@ namespace voxsay
 
         public void PrintAssignInfo(List<MyNoteInfo> mynotes)
         {
+            Console.WriteLine(@"   # NOTE  KEY FRAMES Lyric");
+            Console.WriteLine(@"---- ----- --- ------ ---------------");
+
             int noteindex = 0;
             foreach (var note in mynotes)
             {
@@ -255,15 +258,15 @@ namespace voxsay
                 switch(note.Note)
                 {
                     case "R":
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} (---,{3,6:D})", noteindex, note.Note, notelenStr, Convert.ToInt32(note.FrameLength));
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} --- {3,6:D}", noteindex, note.Note, notelenStr, Convert.ToInt32(note.FrameLength));
                         break;
 
                     case "N":
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} (---,{3,6:D}), {4}", noteindex, note.Note, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : ""));
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} --- {3,6:D} {4}", noteindex, note.Note, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : ""));
                         break;
 
                     default:
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} ({3,3:D},{4,6:D}), {5}", noteindex, note.Note, notelenStr, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
+                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} {3,3:D} {4,6:D} {5}", noteindex, note.Note, notelenStr, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
                         break;
                 }
 
