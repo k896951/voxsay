@@ -213,7 +213,7 @@ namespace voxsay
                     case "<":
                         // １オクターブ下げる（基準キー位置を下位へ変更）
                         if (dot || keyModify || num) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は誤りです", pos + 1, token));
-                        if (!OctaveCheck(Octave + 1)) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は下限以下になります", pos + 1, token));
+                        if (!OctaveCheck(Octave - 1)) throw new Exception(string.Format(@"mml Part column {0}, オクターブの指定 '{1}' は下限以下になります", pos + 1, token));
 
                         Octave--;
                         mml.Octave = Octave;
