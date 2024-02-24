@@ -271,10 +271,12 @@ namespace voxsay
                         var localDefaultRestLen = DefaultNoteLen;
                         if (num) localDefaultRestLen = Regex.Match(token, MacroNumMatchReg).Value;
                         if (dot) localDefaultRestLen += ".";
+                        if (localDefaultRestLen.EndsWith("..")) throw new Exception(string.Format(@"mml Part column {0}, L{1}が指定されているのに{2}へ付点(""."")を指定しました", pos + 2, DefaultNoteLen, macro));
 
-                        if (!NoteLenCheck(localDefaultRestLen)) throw new Exception(string.Format(@"mml Part column {0},  長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 かそれらに"".""を付与したものです", pos + 2, localDefaultRestLen));
+                        if (!NoteLenCheck(localDefaultRestLen)) throw new Exception(string.Format(@"mml Part column {0},  長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 かそれらに"".""を付与したものです", pos + 2, DefaultNoteLen));
 
                         DefaultNoteLen = localDefaultRestLen;
+                        mml.NoteLen = DefaultNoteLen;
                         mml.WithDot = dot;
                         break;
 
