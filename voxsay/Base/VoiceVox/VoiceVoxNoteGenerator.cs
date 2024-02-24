@@ -140,6 +140,26 @@ namespace voxsay
             }
         }
 
+        private string KeyToNote(int key)
+        {
+            Dictionary<int, string> map = new Dictionary<int, string>()
+            {
+                { 0,"C"},
+                { 1,"C#"},
+                { 2,"D"},
+                { 3,"D#"},
+                { 4,"E"},
+                { 5,"F"},
+                { 6,"F#"},
+                { 7,"G"},
+                { 8,"G#"},
+                { 9,"A"},
+                {10,"A#"},
+                {11,"B"}
+            };
+
+            return map[key % 12];
+        }
 
         public VoiceVoxNoteGenerator()
         {
@@ -243,8 +263,8 @@ namespace voxsay
 
         public void PrintAssignInfo(List<MyNoteInfo> mynotes)
         {
-            Console.WriteLine(@"   # NOTE  KEY FRAMES Lyric");
-            Console.WriteLine(@"---- ----- --- ------ ---------------");
+            Console.WriteLine(@"   # NOTE   KEY FRAMES Lyric");
+            Console.WriteLine(@"---- ------ --- ------ ---------------");
 
             int noteindex = 0;
             foreach (var note in mynotes)
@@ -252,15 +272,15 @@ namespace voxsay
                 switch(note.Note)
                 {
                     case "N":
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} --- {3,6:D} {4}", noteindex, note.Note, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : ""));
+                        Console.WriteLine(@"{0,4:D} {1,2:G}{2,-4:G} --- {3,6:D} {4}", noteindex, note.Note, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : ""));
                         break;
 
                     case "R":
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} {3,3:D} {4,6:D}", noteindex, note.Note, note.NoteLen, note.Key, Convert.ToInt32(note.FrameLength));
+                        Console.WriteLine(@"{0,4:D} {1,2:G}{2,-4:G} {3,3:D} {4,6:D}", noteindex, note.Note, note.NoteLen, note.Key, Convert.ToInt32(note.FrameLength));
                         break;
 
                     default:
-                        Console.WriteLine(@"{0,4:D} {1}{2,-4:G} {3,3:D} {4,6:D} {5}", noteindex, note.Note, note.NoteLen, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
+                        Console.WriteLine(@"{0,4:D} {1,2:G}{2,-4:G} {3,3:D} {4,6:D} {5}", noteindex, note.Note, note.NoteLen, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
                         break;
                 }
 
@@ -385,6 +405,7 @@ namespace voxsay
                                     mynotes[noteIndex].FrameLength = dividedNoteFrameLength;
                                     mynotes[noteIndex].defaultLyric = false;
                                     mynotes[noteIndex].Key += lyriclist[lyricindex][cnt].keyUpdown;
+                                    mynotes[noteIndex].Note = KeyToNote(mynotes[noteIndex].Key);
                                     mynotes[noteIndex].NoteLen = "" + NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == dividedNoteFrameLength).Key;
 
                                     noteIndex++;
