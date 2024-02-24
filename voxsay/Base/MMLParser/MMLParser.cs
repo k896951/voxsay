@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -7,8 +8,9 @@ namespace voxsay
 {
     public class MMLParser
     {
-        private const string MacroMatchReg0 = @"^[><TONRLCDEFGAB]";
-        private const string MacroMatchReg1 = @"^([><]|[TON]\d{1,}|[RL]\d{0,}\.{0,1}|[CDEFGAB]\d{0,}\.{0,1}[#+\-]{0,1})";
+        private const string MacroMatchReg0 = @"^[><STONRLCDEFGAB]";
+        private const string MacroMatchReg1 = @"^([><]|S\d|[TON]\d{1,}|L\d{1,}\.{0,1}|R\d{0,}\.{0,1}|[CDEFGAB]\d{0,}\.{0,1}[#+\-]{0,1})";
+        private const string MacroMatchReg2 = @"^([><]|S\d|[TON]\d{1,}|L\d{1,}\.{0,1}|R\d{0,}\.{0,1}|[CDEFGAB][#+\-]{0,1}\d{0,}\.{0,1})";
         private const string MacroNumMatchReg = @"\d{1,}";
         private const string MacroDotMatchReg = @"\.";
         private const string MacroKeyModifierMatchReg = @"[#+\-]";
@@ -20,6 +22,7 @@ namespace voxsay
         private int currentTempo;
         private int currentOctave;
         private string currentNotelen;
+        private int mmlStyleMode = 1;
 
         private Dictionary<string, string> NoteToDefaultLyricMap = new Dictionary<string, string>()
         {
@@ -105,6 +108,19 @@ namespace voxsay
             }
         }
 
+        public int MmlStyle
+        {
+            get
+            {
+                return mmlStyleMode;
+            }
+
+            set
+            {
+                if ((0 < value) && (value < 3)) mmlStyleMode = value;
+            }
+        }
+
         private bool OctaveCheck(int octave)
         {
             return ((-1 < octave) && (octave < 10));
@@ -134,12 +150,28 @@ namespace voxsay
             return ((-1 < key) && (key < 128));
         }
 
+        private bool MmlStyleCheck(int style)
+        {
+            return ((0 < style) && (style < 3));
+        }
+
         public List<MyMMLInfo> ParseMMLString(string mmlstr)
         {
             List<MyMMLInfo> mmlInfo = new List<MyMMLInfo>();
-
+            string MacroMatchReg = "";
             string localMML = mmlstr.ToUpper();
-            MyMMLInfo mml;
+
+            switch(MmlStyle)
+            {
+                case 1:
+                    // スタイル1書式
+                    MacroMatchReg = MacroMatchReg1;
+                    break;
+                case 2:
+                    // スタイル2書式
+                    MacroMatchReg = MacroMatchReg2;
+                    break;
+            }
 
             int addpos;
             for (var pos = 0; pos < localMML.Length; pos += addpos)
@@ -151,7 +183,7 @@ namespace voxsay
                 }
 
                 // 音符・休符部分の切り出し
-                string token = Regex.Match(localMML.Substring(pos), MacroMatchReg1).Value;
+                string token = Regex.Match(localMML.Substring(pos), MacroMatchReg).Value;
                 addpos = token.Length;
 
                 if (addpos == 0)
@@ -160,7 +192,7 @@ namespace voxsay
                 }
 
                 // MML要素生成
-                mml = new MyMMLInfo();
+                var mml = new MyMMLInfo();
                 mmlInfo.Add(mml);
 
                 // マクロ名（先頭１文字） 
@@ -183,6 +215,17 @@ namespace voxsay
                 // 各マクロ処理
                 switch (macro)
                 {
+                    case "S":
+                        // 音符書式（スタイル）変更
+                        if (!num) throw new Exception(string.Format(@"mml Part column {0}, '{1}' にスタイルの指定がありません", pos + 1, token));
+
+                        int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out var localStyle);
+
+                        if(!MmlStyleCheck(localStyle)) throw new Exception(string.Format(@"mml Part column {0}, スタイルの指定 '{1}' は誤りです", pos + 1, localStyle));
+
+                        MmlStyle = localStyle;
+                        break;
+
                     case "T":
                         // テンポの変更
                         if (!num) throw new Exception(string.Format(@"mml Part column {0}, '{1}' にテンポの指定数値がありません", pos + 1, token));
@@ -270,19 +313,41 @@ namespace voxsay
                     case "G":
                     case "A":
                     case "B":
-                        var note = Regex.Replace(token, MacroNoteLenMatchReg, ""); // 長さ指定を消した物
+                        // 長さ指定を消した物
+                        var note = Regex.Replace(token, MacroNoteLenMatchReg, "");
                         if (!NoteCheck(note)) throw new Exception(string.Format(@"mml Part column {0}, {1}にキー修飾指定 '{2}' はできません", pos + 1, macro, note));
 
-                        var localNoteLen = DefaultNoteLen;
-                        if (num) localNoteLen = Regex.Match(token, MacroNumMatchReg).Value;
-                        if (dot) localNoteLen += ".";
-                        if (localNoteLen.EndsWith("..")) throw new Exception(string.Format(@"mml Part column {0}, L{1}が指定されているのに{2}へ付点(""."")を指定しました", pos + 2, DefaultNoteLen, macro));
-                        if (!NoteLenCheck(localNoteLen)) throw new Exception(string.Format(@"mml Part column {0}, 長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 かそれらに"".""を付与したものです", pos + 2, localNoteLen));
+                        switch (MmlStyle)
+                        {
+                            case 1:
+                                var localNoteNum = DefaultNoteLen;
+                                if (num) localNoteNum = Regex.Match(token, MacroNumMatchReg).Value;
+                                if (dot) localNoteNum += ".";
+                                if (localNoteNum.EndsWith("..")) throw new Exception(string.Format(@"mml Part column {0}, L{1}が指定されているのに{2}へ付点(""."")を指定しました", pos + 2, DefaultNoteLen, macro));
+                                if (!NoteLenCheck(localNoteNum)) throw new Exception(string.Format(@"mml Part column {0}, 長さに '{1}' が指定されましたが設定可能な値は 1,2,4,8,16,32,64,128 かそれらに"".""を付与したものです", pos + 2, localNoteNum));
 
-                        mml.MacroName = note;
-                        mml.NoteLen = localNoteLen;
-                        mml.SampleLyric = NoteToSampleLyric(macro);
-                        mml.WithDot = dot;
+                                mml.MacroName = note;
+                                mml.NoteLen = localNoteNum;
+                                mml.SampleLyric = NoteToSampleLyric(macro);
+                                mml.WithDot = dot;
+                                break;
+
+                            case 2:
+                                var localBaseOctave = Octave;
+                                var localNoteNum2 = DefaultNoteLen;
+                                if (num) int.TryParse(Regex.Match(token, MacroNumMatchReg).Value, out localBaseOctave);
+                                if (!OctaveCheck(localBaseOctave)) throw new Exception(string.Format(@"mml Part column {0}, オクターブに '{1}' が指定されましたが範囲は 0～9 です", pos + 2, localBaseOctave));
+                                if (dot) localNoteNum2 += ".";
+                                if (localNoteNum2.EndsWith("..")) throw new Exception(string.Format(@"mml Part column {0}, L{1}が指定されているのに{2}へ付点(""."")を指定しました", pos + 2, DefaultNoteLen, macro));
+
+                                mml.MacroName = note;
+                                mml.NoteLen = localNoteNum2;
+                                mml.Octave = localBaseOctave;
+                                mml.SampleLyric = NoteToSampleLyric(macro);
+                                mml.WithDot = dot;
+                                break;
+                        }
+
                         break;
                 }
             }

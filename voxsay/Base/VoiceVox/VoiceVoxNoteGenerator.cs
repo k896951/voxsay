@@ -291,11 +291,11 @@ namespace voxsay
                         break;
 
                     case ">":
+                    case "<":
                         Octave = item.Octave;
                         break;
 
-                    case "<":
-                        Octave = item.Octave;
+                    case "S":
                         break;
 
                     default:
