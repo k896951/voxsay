@@ -14,39 +14,41 @@ namespace voxsay
                                    @"ガギグゲゴザジズゼゾダヂヅデドバビブベボ" +
                                    @"ぱぴぷぺぽ" +
                                    @"パピプペポ" +
-                                   @"ぁぃぅぇぉゃゅょァィゥェォャュョーっッ" +
+                                   @"ぁぃぅぇぉゃゅょァィゥェォャュョっッー" +
+                                   @"+\-" +
                                    @"\(（\)）" +
                                    @" 　\t]";          // タブ + 空白(半角 + 全角)
 
         private const string lyricParentChars2 =
-                                   @"[きぎ][ぇゃゅょ]ー{0,1}|" +
-                                   @"[キギ][ェャュョ]ー{0,1}|" +
-                                   @"[しじ][ぇゃゅょ]ー{0,1}|" +
-                                   @"[シジ][ェャュョ]ー{0,1}|" +
-                                   @"[すず][ぃ]ー{0,1}|" +
-                                   @"[スズ][ィ]ー{0,1}|" +
-                                   @"[ちぢ][ぇゃゅょ]ー{0,1}|" +
-                                   @"[チヂ][ェャュョ]ー{0,1}|" +
-                                   @"[つ][ぁぃぇぉ]ー{0,1}|" +
-                                   @"[ツ][ァィェォ]ー{0,1}|" +
-                                   @"[てで][ぃ]ー{0,1}|" +
-                                   @"[テデ][ィ]ー{0,1}|" +
-                                   @"[と][ぅ]ー{0,1}|" +
-                                   @"[ト][ゥ]ー{0,1}|" +
-                                   @"[に][ぇゃゅょ]ー{0,1}|" +
-                                   @"[ニ][ェャュョ]ー{0,1}|" +
-                                   @"[ひびぴ][ぇゃゅょ]ー{0,1}|" +
-                                   @"[ヒビピ][ェャュョ]ー{0,1}|" +
-                                   @"[ふ][ぁぃぇぉ]ー{0,1}|" +
-                                   @"[フ][ァィェォ]ー{0,1}|" +
-                                   @"[み][ぇゃゅょ]ー{0,1}|" +
-                                   @"[ミ][ェャュョ]ー{0,1}|" +
-                                   @"[り][ぇ]ー{0,1}|" +
-                                   @"[リ][ェ]ー{0,1}|" +
-                                   @".";
+                                   @"[きぎ][ぇゃゅょ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[キギ][ェャュョ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[しじ][ぇゃゅょ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[シジ][ェャュョ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[すず][ぃ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[スズ][ィ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[ちぢ][ぇゃゅょ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[チヂ][ェャュョ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[つ][ぁぃぇぉ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[ツ][ァィェォ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[てで][ぃ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[テデ][ィ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[と][ぅ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[ト][ゥ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[に][ぇゃゅょ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[ニ][ェャュョ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[ひびぴ][ぇゃゅょ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[ヒビピ][ェャュョ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[ふ][ぁぃぇぉ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[フ][ァィェォ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[み][ぇゃゅょ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[ミ][ェャュョ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[り][ぇ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @"[リ][ェ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
+                                   @".[+\-]{0,1}\d{0,1}";
 
         private const string lyricParentChars3 = @"[ー 　\t]"; // タブ + 空白(半角 + 全角)含む
-        private const string lyricParentChars4 = @"[っッ]";
+        private const string lyricParentChars4 = @"(.)([+\-]{1,1}\d{0,})";
+        private const string lyricParentChars5 = @"[っッ][+\-]{0,1}";
 
         private const string lyricGroupingOpen = @"（(";
         private const string lyricGroupingClose = @")）";
@@ -55,38 +57,54 @@ namespace voxsay
         private Regex lyricParentChars2ex;
         private Regex lyricParentChars3ex;
         private Regex lyricParentChars4ex;
+        private Regex lyricParentChars5ex;
 
         public LyricParser()
         {
             lyricParentChars1ex = new Regex(lyricParentChars1);
             lyricParentChars2ex = new Regex(lyricParentChars2);
             lyricParentChars3ex = new Regex(lyricParentChars3);
-            lyricParentChars4ex = new Regex(lyricParentChars4);
+            lyricParentChars4ex = new Regex(lyricParentChars5);
+            lyricParentChars5ex = new Regex(lyricParentChars4);
         }
 
-        public List<List<string>> ParseLyricString(string lyric)
+        public List<List<MyLyricInfo>> ParseLyricString(string lyric)
         {
             int lyricposition = 0;
             var planelist = new List<MyLyricInfo>();
 
-            // 文字単位で分解
+            // 歌詞単位で分解
             var lp = lyricParentChars2ex.Matches(lyric).GetEnumerator();
             while (lp.MoveNext())
             {
+                // 歌詞に含まれる長音記号、空白、タブ、を消す
                 string lyricChar = lyricParentChars3ex.Replace(lp.Current.ToString(), @"");
 
                 if (lyricChar != "")
                 {
-                    if(!lyricParentChars1ex.IsMatch(lyricChar))
-                    {
-                        // 歌詞として受け入れできない
-                        throw new Exception(string.Format(@"lyric Part column {0}, 歌詞として受け入れられない文字　'{1}' があります", lyricposition + 1, lyricChar));
-                    }
+                    // 歌詞として受け入れできない
+                    if (!lyricParentChars1ex.IsMatch(lyricChar)) throw new Exception(string.Format(@"lyric Part column {0}, 歌詞として受け入れられない文字 '{1}' があります", lyricposition + 1, lyricChar));
+
                     MyLyricInfo mylyric = new MyLyricInfo
                     {
                         Column = lyricposition,
-                        Lyric = lyricChar
+                        Lyric = lyricChar,
+                        keyUpdown = 0
                     };
+
+                    // キー移動指定の処理
+                    if (lyricParentChars5ex.IsMatch(lyricChar))
+                    {
+                        mylyric.Lyric = lyricParentChars5ex.Replace(lyricChar, @"$1");
+
+                        var keydispstr = lyricParentChars5ex.Replace(lyricChar, @"$2");
+                        if (keydispstr.Length == 1) keydispstr += "1";
+
+                        int.TryParse(keydispstr, out var keydisp);
+
+                        mylyric.keyUpdown += keydisp; 
+                    }
+
                     lyricposition += lp.Current.ToString().Length;
 
                     planelist.Add(mylyric);
@@ -99,16 +117,16 @@ namespace voxsay
             return lyricList;
         }
 
-        private List<List<string>> AggregationLyricParts(List<MyLyricInfo> list)
+        private List<List<MyLyricInfo>> AggregationLyricParts(List<MyLyricInfo> list)
         {
-            List<List<string>> parsed1stlist = new List<List<string>>();
+            List<List<MyLyricInfo>> parsed1stlist = new List<List<MyLyricInfo>>();
 
             int index = 0;
 
             // 分割した歌詞の集約
             for (index = 0; index < list.Count; index++)
             {
-                parsed1stlist.Add(new List<string>());
+                parsed1stlist.Add(new List<MyLyricInfo>());
 
                 if (!lyricGroupingOpen.Contains(list[index].Lyric) && !lyricGroupingClose.Contains(list[index].Lyric))
                 {
@@ -119,12 +137,12 @@ namespace voxsay
                         // 先頭の促音文字なら適用を許す。
                         if (index == 0)
                         {
-                            parsed1stlist[parsed1stlist.Count - 1].Add(list[index].Lyric);
+                            parsed1stlist[parsed1stlist.Count - 1].Add(list[index]);
                         }
                     }
                     else
                     {
-                        parsed1stlist[parsed1stlist.Count - 1].Add(lyricParentChars4ex.Replace(list[index].Lyric, ""));
+                        parsed1stlist[parsed1stlist.Count - 1].Add(list[index]); //.LyriclyricParentChars4ex.Replace(, ""));
                     }
 
                 }
@@ -168,12 +186,12 @@ namespace voxsay
                             if ((spos + 1) == index)
                             {
                                 // 文字列最初の促音文字は残す
-                                parsed1stlist[parsed1stlist.Count - 1].Add(list[index].Lyric);
+                                parsed1stlist[parsed1stlist.Count - 1].Add(list[index]);
                             }
                         }
                         else
                         {
-                            parsed1stlist[parsed1stlist.Count - 1].Add(list[index].Lyric);
+                            parsed1stlist[parsed1stlist.Count - 1].Add(list[index]);
                         }
                         index++;
                     }

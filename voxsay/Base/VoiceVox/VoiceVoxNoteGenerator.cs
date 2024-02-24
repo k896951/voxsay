@@ -157,7 +157,7 @@ namespace voxsay
             List<MyNoteInfo> mynoteinfo = new List<MyNoteInfo>();
             List<MyNoteInfo> notelist;
             List<MyMMLInfo> mmllist;
-            List<List<string>> lyriclist;
+            List<List<MyLyricInfo>> lyriclist;
 
             foreach (var measure in Regex.Split(singtext, @"[,]"))
             {
@@ -317,7 +317,7 @@ namespace voxsay
             return mynotes;
         }
 
-        private void AssignLyricToMyNoteInfo(ref List<List<string>> lyriclist, ref List<MyNoteInfo> mynotes)
+        private void AssignLyricToMyNoteInfo(ref List<List<MyLyricInfo>> lyriclist, ref List<MyNoteInfo> mynotes)
         {
             int lyricindex = 0;
             int noteIndex = 0;
@@ -345,18 +345,20 @@ namespace voxsay
                             if (lyriclist[lyricindex].Count == 1)
                             {
                                 // 音符を分割しない場合
-                                mynotes[noteIndex].Lyric = lyriclist[lyricindex++][0];
+                                mynotes[noteIndex].Lyric = lyriclist[lyricindex][0].Lyric;
                                 mynotes[noteIndex].defaultLyric = false;
+                                mynotes[noteIndex].Key += lyriclist[lyricindex][0].keyUpdown;
+                                lyricindex++;
                                 noteIndex++;
                             }
                             else
                             {
                                 // 音符が分割される場合
                                 var targetNoteFrameLength = mynotes[noteIndex].FrameLength;
-                                int dividedNoteFrameLength = Convert.ToInt32(mynotes[noteIndex].FrameLength / lyriclist[lyricindex].Count);
+                                var dividedNoteFrameLength = mynotes[noteIndex].FrameLength / lyriclist[lyricindex].Count;
                                 int difflen = Convert.ToInt32( targetNoteFrameLength - (lyriclist[lyricindex].Count * dividedNoteFrameLength ));
 
-                                // clone()を実装しないので
+                                // clone()を実装しないので。
                                 var FrameLength = mynotes[noteIndex].FrameLength;
                                 var Key = mynotes[noteIndex].Key;
                                 var Lyric = mynotes[noteIndex].Lyric;
@@ -379,9 +381,11 @@ namespace voxsay
                                 // フレーム長と歌詞の再割り当て
                                 for (int cnt = 0; cnt < lyriclist[lyricindex].Count; cnt++)
                                 {
-                                    mynotes[noteIndex].Lyric = lyriclist[lyricindex][cnt];
+                                    mynotes[noteIndex].Lyric = lyriclist[lyricindex][cnt].Lyric;
                                     mynotes[noteIndex].FrameLength = dividedNoteFrameLength;
                                     mynotes[noteIndex].defaultLyric = false;
+                                    mynotes[noteIndex].Key += lyriclist[lyricindex][cnt].keyUpdown;
+                                    mynotes[noteIndex].NoteLen = "" + NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == dividedNoteFrameLength).Key;
 
                                     noteIndex++;
                                 }
