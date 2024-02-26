@@ -487,7 +487,7 @@ namespace voxsay
         /// <param name="speaker">話者番号（StyleId）</param>
         /// <param name="param">エフェクト</param>
         /// <param name="mynotes">歌唱させる楽譜</param>
-        public bool Sing(int speaker, SpeakerParams param, List<MyNoteInfo> mynotes)
+        public bool Sing(int speaker, SpeakerParams param, VoiceVoxNotes mynotes)
         {
             switch (SelectedProdinfo.Product)
             {
@@ -513,7 +513,7 @@ namespace voxsay
         /// <param name="speaker">話者番号（StyleId）</param>
         /// <param name="param">エフェクト</param>
         /// <param name="mynotes">歌唱させる楽譜</param>
-        public void AsyncSing(int speaker, SpeakerParams param, List<MyNoteInfo> mynotes)
+        public void AsyncSing(int speaker, SpeakerParams param, VoiceVoxNotes mynotes)
         {
             switch (SelectedProdinfo.Product)
             {
@@ -542,7 +542,7 @@ namespace voxsay
         /// <param name="param">エフェクト</param>
         /// <param name="mynotes">歌唱させる楽譜</param>
         /// <param name="WavFilePath">保存するファイル名</param>
-        public bool SaveSong(int speaker, SpeakerParams param, List<MyNoteInfo> mynotes, string WavFilePath)
+        public bool SaveSong(int speaker, SpeakerParams param, VoiceVoxNotes mynotes, string WavFilePath)
         {
             switch (SelectedProdinfo.Product)
             {
@@ -944,7 +944,7 @@ namespace voxsay
             return ans;
         }
 
-        private VoiceVoxFrameAudioQuery GetVoiceVoxFrameAudioQuery(List<MyNoteInfo> mynotes, int speaker)
+        private VoiceVoxFrameAudioQuery GetVoiceVoxFrameAudioQuery(VoiceVoxNotes mynotes, int speaker)
         {
             string url = string.Format(@"{0}/sing_frame_audio_query?speaker={1}", BaseUri, speaker);
             DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
@@ -952,27 +952,10 @@ namespace voxsay
 
             settings.UseSimpleDictionaryFormat = true;
 
-            var Score = new VoiceVoxNotes();
-            
-            Score.Notes = new List<VoiceVoxNote>();
-            foreach (var note in mynotes)
-            {
-                var noteobj = new VoiceVoxNote();
-                noteobj.Lyric = note.Lyric;
-                noteobj.Key = note.Key;
-                noteobj.Frame_Length = Convert.ToInt32(note.FrameLength);
-
-                if ((note.Lyric == "") && (note.Note.Substring(0, 1) == "R"))
-                {
-                    noteobj.Key = null;
-                }
-                Score.Notes.Add(noteobj);
-            }
-
             var jsonNotes = new DataContractJsonSerializer(typeof(List<VoiceVoxNotes>));
             MemoryStream ms = new MemoryStream();
 
-            jsonNotes.WriteObject(ms, Score);
+            jsonNotes.WriteObject(ms, mynotes);
 
             var content = new StringContent(Encoding.UTF8.GetString(ms.ToArray()), Encoding.UTF8, "application/json");
 

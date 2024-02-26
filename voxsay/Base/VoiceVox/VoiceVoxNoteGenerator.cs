@@ -6,422 +6,262 @@ using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Text.RegularExpressions;
 using voxsay.Base.VoiceVox;
+using MMLParser;
+using System.Net.Http.Headers;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
+using System.ComponentModel.Design;
 
 namespace voxsay
 {
     public class VoiceVoxNoteGenerator
     {
-        private int currentTempo;
-        private int currentOctave;
-        private string currentNotelen;
-        private LyricParser lyricParser;
-        private MMLParser mmlParser;
+        //private int currentTempo;
+        //private int currentOctave;
+        //private string currentNotelen;
+        private Parser mmlParser;
 
-        private const double FrameDuration = 0.010752688; // BPM=120時、1フレームの時間
+        private const double frameDuration = 0.01075268817204301075268817204301; // BPM=120時、１フレームの時間
+        private const double frameConvRate = 0.096875;                           // 46.5 ÷ 480 , VOICEVOXフレーム数への変換レート
 
-        private Dictionary<string, double> NoteLengthToFrameLengthMap = new Dictionary<string, double>()
+        /// <summary>
+        /// ノート長さと係数のマップ
+        /// </summary>
+        private readonly Dictionary<string, double> NoteLengthToCoefficientMap = new Dictionary<string, double>()
         {
-            {   "1.", 300.0    },
-            {   "1" , 200.0    },
-            {   "2.", 150.0    },
-            {   "2" , 100.0    },
-            {   "4.",  75.0    },
-            {   "4" ,  50.0    },
-            {   "8.",  37.5    },
-            {   "8" ,  25.0    },
-            {  "16.",  18.75   },
-            {  "16" ,  12.5    },
-            {  "32.",   9.375  },
-            {  "32" ,   6.25   },
-            {  "64.",   4.6875 },
-            {  "64",    3.125  },
-            { "128.",   2.34375},
-            { "128" ,   1.5625 }
+            {   "1.",  9.0     },
+            {   "1" ,  6.0     },
+            {   "2.",  3.0     },
+            {   "2" ,  2.0     },
+            {   "4.",  1.5     },
+            {   "4" ,  1       },
+            {   "8.",  0.75    },
+            {   "8" ,  0.5     },
+            {  "16.",  0.375   },
+            {  "16" ,  0.25    },
+            {  "32.",  0.1875  },
+            {  "32" ,  0.125   },
+            {  "64.",  0.09375 },
+            {  "64",   0.0625  },
+            { "128.",  0.046875},
+            { "128" ,  0.03125 }
         };
 
-        private Dictionary<int, int> OctaveToKeyMap = new Dictionary<int, int>()
+        /// <summary>
+        /// キー相対位置とノートのマップ
+        /// </summary>
+        private readonly Dictionary<int, string> KeyDispToNoteMap = new Dictionary<int, string>()
         {
-            { 0,  12},
-            { 1,  24},
-            { 2,  36},
-            { 3,  48},
-            { 4,  60},
-            { 5,  72},
-            { 6,  84},
-            { 7,  96},
-            { 8, 108},
-            { 9, 120},
+            {  0, "C" },
+            {  1, "C#"},
+            {  2, "D" },
+            {  3, "D#"},
+            {  4, "E" },
+            {  5, "F" },
+            {  6, "F#"},
+            {  7, "G" },
+            {  8, "G#"},
+            {  9, "A" },
+            { 10, "A#"},
+            { 11, "B" }
         };
 
-        private Dictionary<string, int> NoteToKeyDispMap = new Dictionary<string, int>()
-        {
-            { "C",  0},
-            { "C#", 1},
-            { "C+", 1},
-            { "D-", 1},
-            { "D",  2},
-            { "D#", 3},
-            { "D+", 3},
-            { "E-", 3},
-            { "E",  4},
-            { "F",  5},
-            { "F#", 6},
-            { "F+", 6},
-            { "G-", 6},
-            { "G",  7},
-            { "G#", 8},
-            { "G+", 8},
-            { "A-", 8},
-            { "A",  9},
-            { "A#",10},
-            { "A+",10},
-            { "B-",10},
-            { "B", 11}
-        };
-
-        public int Bpm
+        /// <summary>
+        /// 1tick辺りの時間
+        /// </summary>
+        public double FrameDuration
         {
             get
             {
-                return currentTempo;
-            }
-
-            set
-            {
-                currentTempo = value;
-
-                var framelength = (60.0 / currentTempo) / FrameDuration;
-
-                NoteLengthToFrameLengthMap["1."]   = framelength * 4 * 1.5;  // 　　　付点全音符フレーム数
-                NoteLengthToFrameLengthMap["1"]    = framelength * 4;        // 　　　　　全音符フレーム数
-                NoteLengthToFrameLengthMap["2."]   = framelength * 2 * 1.5;  // 　　付点２分音符フレーム数
-                NoteLengthToFrameLengthMap["2"]    = framelength * 2;        // 　　　　２分音符フレーム数
-                NoteLengthToFrameLengthMap["4."]   = framelength * 1.5;      // 　　付点４分音符フレーム数
-                NoteLengthToFrameLengthMap["4"]    = framelength;            // 　　　　４分音符フレーム数
-                NoteLengthToFrameLengthMap["8."]   = framelength / 2 * 1.5;  // 　　付点８分音符フレーム数
-                NoteLengthToFrameLengthMap["8"]    = framelength / 2;        // 　　　　８分音符フレーム数
-                NoteLengthToFrameLengthMap["16."]  = framelength / 4 * 1.5;  // 　付点１６分音符フレーム数
-                NoteLengthToFrameLengthMap["16"]   = framelength / 4;        // 　　　１６分音符フレーム数
-                NoteLengthToFrameLengthMap["32."]  = framelength / 8 * 1.5;  // 　付点３２分音符フレーム数
-                NoteLengthToFrameLengthMap["32"]   = framelength / 8;        //　　 　３２分音符フレーム数
-                NoteLengthToFrameLengthMap["64."]  = framelength / 16 * 1.5; // 　付点６４分音符フレーム数
-                NoteLengthToFrameLengthMap["64"]   = framelength / 16;       // 　　　６４分音符フレーム数
-                NoteLengthToFrameLengthMap["128."] = framelength / 32 * 1.5; // 付点１２８分音符フレーム数
-                NoteLengthToFrameLengthMap["128"]  = framelength / 32;       // 　　１２８分音符フレーム数
+                return frameDuration;
             }
         }
 
-        public int Octave
+        /// <summary>
+        /// 楽譜に設定するフレーム数計算
+        /// </summary>
+        /// <param name="tempo">テンポ</param>
+        /// <param name="notelen">ノート長</param>
+        /// <returns>フレーム数</returns>
+        private int CalcFrameLength(int tempo, string notelen)
         {
-            get
+            double FrameLength = (60.0 / tempo) / frameDuration; // 指定テンポ時４分音符のフレーム数
+
+            if (NoteLengthToCoefficientMap.ContainsKey(notelen))
             {
-                return currentOctave;
+                return Convert.ToInt32(FrameLength * NoteLengthToCoefficientMap[notelen]);
             }
 
-            set
-            {
-                if (OctaveToKeyMap.ContainsKey(value)) currentOctave = value;
-            }
+            return 0;
         }
 
-        public string DefaultNoteLen
-        {
-            get
-            {
-                return currentNotelen;
-            }
 
-            set
-            {
-                if (NoteLengthToFrameLengthMap.ContainsKey(value))
-                {
-                    currentNotelen = value;
-                }
-            }
-        }
-
+        /// <summary>
+        /// キーからノートを計算する
+        /// </summary>
+        /// <param name="key">キー 0～127</param>
+        /// <returns>対応するノート</returns>
         private string KeyToNote(int key)
         {
-            Dictionary<int, string> map = new Dictionary<int, string>()
-            {
-                { 0,"C"},
-                { 1,"C#"},
-                { 2,"D"},
-                { 3,"D#"},
-                { 4,"E"},
-                { 5,"F"},
-                { 6,"F#"},
-                { 7,"G"},
-                { 8,"G#"},
-                { 9,"A"},
-                {10,"A#"},
-                {11,"B"}
-            };
-
-            return map[key % 12];
+            return KeyDispToNoteMap[key % 12];
         }
 
+        /// <summary>
+        /// キーからオクターブを計算する
+        /// </summary>
+        /// <param name="key">キー 12～127</param>
+        /// <returns>対応するノート</returns>
+        private int KeyToOctave(int key)
+        {
+            if (key < 12) throw new ArgumentException("範囲が不正");
+            return (key / 12) - 1;
+        }
+
+        /// <summary>
+        /// 楽譜生成
+        /// </summary>
         public VoiceVoxNoteGenerator()
         {
             // デフォルト T120, O4, L4 に設定
 
-            Bpm = 120;
-            Octave = 4;
-            DefaultNoteLen = "4";
-            mmlParser = new MMLParser(Bpm, Octave, DefaultNoteLen);
-            lyricParser = new LyricParser();
+            mmlParser = new Parser();
+            mmlParser.Bpm = 120;
+            mmlParser.Octave = 4;
+            mmlParser.DefaultNoteLen = "4";
         }
 
-        public List<MyNoteInfo> ParseSingString(string singtext)
+        /// <summary>
+        /// 解析を行って情報リストを作成する
+        /// </summary>
+        /// <param name="singtext">MML文字列、または歌詞付きのMML文字列</param>
+        /// <returns>解析結果の情報リスト</returns>
+        /// <exception cref="Exception">解析中のエラー(書式エラーなど)</exception>
+        public List<NoteInfo> ParseSingString(string singtext)
         {
-            List<MyNoteInfo> mynoteinfo = new List<MyNoteInfo>();
-            List<MyNoteInfo> notelist;
-            List<MyMMLInfo> mmllist;
-            List<List<MyLyricInfo>> lyriclist;
+            List<NoteInfo> mynoteinfo = new List<NoteInfo>();
 
-            foreach (var measure in Regex.Split(singtext, @"[,]"))
+            try
             {
-                try
-                {
-                    var parts = Regex.Split(measure.Trim(), @"[:：]+");
-                    switch (parts.Length)
-                    {
-                        case 1: // MMLだけある場合
-                            mmllist = mmlParser.ParseMMLString(parts[0].Trim());
-                            notelist = GenMyNoteInfoFromMyMMLInfo(ref mmllist);
-                            break;
-
-                        case 2:  // 歌詞とMMLがある場合
-                            lyriclist = lyricParser.ParseLyricString(parts[0].Trim());
-                            mmllist = mmlParser.ParseMMLString(parts[1].Trim());
-                            notelist = GenMyNoteInfoFromMyMMLInfo(ref mmllist);
-                            AssignLyricToMyNoteInfo(ref lyriclist, ref notelist);
-                            break;
-
-                        default:
-                            throw new Exception(string.Format(@"Incorrect definition."));
-                    }
-
-                    // 最初に休符を入れておく
-                    if (mynoteinfo.Count == 0)
-                    {
-                        var noteRinfo = new MyNoteInfo();
-                        noteRinfo.Lyric = "";
-                        noteRinfo.Note = "R";
-                        noteRinfo.NoteLen = "";
-                        noteRinfo.Key = OctaveToKeyMap[currentOctave];
-                        noteRinfo.FrameLength = 2; // 多分最小
-                        mynoteinfo.Add(noteRinfo);
-                    }
-
-                    // 解析結果を追加
-
-                    mynoteinfo.AddRange(notelist);
-
-                }
-                catch (Exception e)
-                {
-                    throw new Exception(string.Format(@"measure:[{0}], {1}", measure.Trim(), e.Message), e);
-                }
+                mynoteinfo = mmlParser.ParseSingString(singtext);
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format(@"{0}", e.Message), e);
             }
 
             return mynoteinfo;
         }
 
-        public string ExportNotes(List<MyNoteInfo> mynotes)
+        /// <summary>
+        /// 情報リストから VOICEVOX API /sing_frame_audio_query で利用する楽譜情報へ変換する
+        /// </summary>
+        /// <param name="mynoteinfo">情報リスト</param>
+        /// <returns>楽譜情報(VOICEVOXのノート情報)</returns>
+        /// <exception cref="Exception">変換中のエラー</exception>
+        public VoiceVoxNotes ConvertScoreInfo(List<NoteInfo> mynoteinfo)
+        {
+            var voiceVoxNotes = new VoiceVoxNotes();
+            voiceVoxNotes.Notes = new List<VoiceVoxNote>();
+
+            try
+            {
+                // 最初に休符を入れておく
+                var noteRinfo = new VoiceVoxNote
+                {
+                    Lyric = "",
+                    Frame_Length = 2, // 多分最小
+                    Key = null
+                };
+                voiceVoxNotes.Notes.Add(noteRinfo);
+
+                foreach (var noteItem in mynoteinfo)
+                {
+                    // 音符・休符分割前のフレーム数に変換レートを掛ける
+                    var parentFrames = Convert.ToInt32(noteItem.Ticks * frameConvRate);
+
+                    int frames = 0;
+                    foreach (var subNoteItem in noteItem.Notes)
+                    {
+
+                        // 音符分割後のフレーム数に変換レートを掛ける
+                        var subFrames = Convert.ToInt32(subNoteItem.Ticks * frameConvRate);
+
+                        var note = new VoiceVoxNote
+                        {
+                            Key = subNoteItem.Key,
+                            Lyric = subNoteItem.Lyric,
+                            Frame_Length = subFrames
+                        };
+
+                        // 分割した音符のフレーム数合計
+                        frames += subFrames;
+
+                        // 休符の時はキーをnullにする
+                        if (subNoteItem.Note == "R") note.Key = null;
+
+                        voiceVoxNotes.Notes.Add(note);
+                    }
+                    // 分割した音符のフレーム数合計と分割前音符のフレーム数に差異があれば、分割した音符で最後の物に差分を足し込む
+                    voiceVoxNotes.Notes[voiceVoxNotes.Notes.Count - 1].Frame_Length += (parentFrames - frames);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format(@"{0}", e.Message), e);
+            }
+
+            return voiceVoxNotes;
+        }
+
+        /// <summary>
+        /// VOICEVOX API /sing_frame_audio_query で利用する楽譜情報をJSONでエクスポートする
+        /// </summary>
+        /// <param name="mynotes">ノート情報</param>
+        /// <returns>JSON(文字列) </returns>
+        public string ExportNotes(VoiceVoxNotes mynotes)
         {
             DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
 
             settings.UseSimpleDictionaryFormat = true;
 
-            var Score = new VoiceVoxNotes();
-
-            Score.Notes = new List<VoiceVoxNote>();
-            foreach (var note in mynotes)
-            {
-                var noteobj = new VoiceVoxNote();
-                noteobj.Lyric = note.Lyric;
-                noteobj.Key = note.Key;
-                noteobj.Frame_Length = Convert.ToInt32(note.FrameLength);
-
-                if ((note.Lyric == "") && (note.Note == "R"))
-                {
-                    noteobj.Key = null;
-                }
-                Score.Notes.Add(noteobj);
-            }
-
             var jsonNotes = new DataContractJsonSerializer(typeof(List<VoiceVoxNotes>));
             MemoryStream ms = new MemoryStream();
 
-            jsonNotes.WriteObject(ms, Score);
+            jsonNotes.WriteObject(ms, mynotes);
 
             var ans = Encoding.UTF8.GetString(ms.ToArray());
 
             return ans;
         }
 
-        public void PrintAssignInfo(List<MyNoteInfo> mynotes)
+        /// <summary>
+        /// 楽譜情報の内容を表示する
+        /// </summary>
+        /// <param name="mynotes">ノート情報</param>
+        public void PrintAssignInfo(VoiceVoxNotes score)
         {
-            Console.WriteLine(@"   # NOTE   KEY FRAMES Lyric");
-            Console.WriteLine(@"---- ------ --- ------ ---------------");
+            Console.WriteLine(@"   # KEY FRAMES O NOTE   Lyric");
+            Console.WriteLine(@"---- --- ------ - ------ ---------------");
 
             int noteindex = 0;
-            foreach (var note in mynotes)
+            foreach (var note in score.Notes)
             {
-                switch(note.Note)
+                if(note.Key is null)
                 {
-                    case "N":
-                        Console.WriteLine(@"{0,4:D} {1,2:G}{2,-4:G} --- {3,6:D} {4}", noteindex, note.Note, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : ""));
-                        break;
+                    // "R"
+                    Console.WriteLine(@"{0,4:D}     {1,6:D} {2,1:G} {3,-6:D}", noteindex, note.Frame_Length, "", "R");
+                }
+                else
+                {
+                    // other
+                    var noteStr = KeyToNote((int)note.Key);
+                    var noteOctave = KeyToOctave((int)note.Key);
 
-                    case "R":
-                        Console.WriteLine(@"{0,4:D} {1,2:G}{2,-4:G} {3,3:D} {4,6:D}", noteindex, note.Note, note.NoteLen, note.Key, Convert.ToInt32(note.FrameLength));
-                        break;
-
-                    default:
-                        Console.WriteLine(@"{0,4:D} {1,2:G}{2,-4:G} {3,3:D} {4,6:D} {5}", noteindex, note.Note, note.NoteLen, note.Key, Convert.ToInt32(note.FrameLength), note.Lyric + (note.defaultLyric ? "(default)" : "") );
-                        break;
+                    Console.WriteLine(@"{0,4:D} {1,3:G} {2,6:D} {3,1:G} {4,-6:D} {5}", noteindex, note.Key, note.Frame_Length, noteOctave, noteStr, note.Lyric);
                 }
 
                 noteindex++;
             }
 
-        }
-
-        private List<MyNoteInfo> GenMyNoteInfoFromMyMMLInfo(ref List<MyMMLInfo> mmllist)
-        {
-            List<MyNoteInfo> mynotes = new List<MyNoteInfo>();
-
-            foreach (var item in mmllist)
-            {
-                string macro = item.MacroName.Substring(0, 1);
-                switch (macro)
-                {
-                    case "T":
-                        Bpm = item.Tempo;
-                        break;
-
-                    case "O":
-                        Octave = item.Octave;
-                        break;
-
-                    case "L":
-                        DefaultNoteLen = item.NoteLen;
-                        break;
-
-                    case ">":
-                    case "<":
-                        Octave = item.Octave;
-                        break;
-
-                    case "S":
-                        break;
-
-                    default:
-                        // 音符・休符の生成
-                        var noteItem = new MyNoteInfo();
-                        noteItem.Note = item.MacroName;
-                        noteItem.NoteLen = item.NoteLen;
-                        noteItem.Lyric = item.SampleLyric;
-                        noteItem.defaultLyric = true;
-                        noteItem.Key = macro == "N" ? item.Key : OctaveToKeyMap[item.Octave] + (macro == "R" ? 0 : NoteToKeyDispMap[item.MacroName]);
-                        noteItem.FrameLength = NoteLengthToFrameLengthMap[noteItem.NoteLen];
-
-                        mynotes.Add(noteItem);
-
-                        break;
-                }
-            }
-
-            return mynotes;
-        }
-
-        private void AssignLyricToMyNoteInfo(ref List<List<MyLyricInfo>> lyriclist, ref List<MyNoteInfo> mynotes)
-        {
-            int lyricindex = 0;
-            int noteIndex = 0;
-
-            if (lyriclist.Count == 0) return;
-
-            while (noteIndex < mynotes.Count)
-            {
-                string macro = mynotes[noteIndex].Note.Substring(0, 1);
-                switch (macro) {
-                    case "T":
-                    case "O":
-                    case "L":
-                        noteIndex++;
-                        break;
-
-                    case "R":
-                        noteIndex++;
-                        break;
-
-                    default:
-                        // C～Bの音符に歌詞を割り当てる
-                        if(lyriclist.Count > lyricindex)
-                        {
-                            if (lyriclist[lyricindex].Count == 1)
-                            {
-                                // 音符を分割しない場合
-                                mynotes[noteIndex].Lyric = lyriclist[lyricindex][0].Lyric;
-                                mynotes[noteIndex].defaultLyric = false;
-                                mynotes[noteIndex].Key += lyriclist[lyricindex][0].keyUpdown;
-                                lyricindex++;
-                                noteIndex++;
-                            }
-                            else
-                            {
-                                // 音符が分割される場合
-                                var targetNoteFrameLength = mynotes[noteIndex].FrameLength;
-                                var dividedNoteFrameLength = mynotes[noteIndex].FrameLength / lyriclist[lyricindex].Count;
-                                int difflen = Convert.ToInt32( targetNoteFrameLength - (lyriclist[lyricindex].Count * dividedNoteFrameLength ));
-
-                                // clone()を実装しないので。
-                                var FrameLength = mynotes[noteIndex].FrameLength;
-                                var Key = mynotes[noteIndex].Key;
-                                var Lyric = mynotes[noteIndex].Lyric;
-                                var Note = mynotes[noteIndex].Note;
-                                var DefaultLyric = mynotes[noteIndex].defaultLyric;
-
-                                // 音符追加
-                                for (int cnt = 0; cnt < (lyriclist[lyricindex].Count - 1); cnt++)
-                                {
-                                    var newNote = new MyNoteInfo();
-                                    newNote.FrameLength = FrameLength;
-                                    newNote.Key = Key;
-                                    newNote.Lyric = Lyric;
-                                    newNote.Note = Note;
-                                    newNote.defaultLyric = DefaultLyric;
-
-                                    mynotes.Insert(noteIndex, newNote);
-                                }
-
-                                // フレーム長と歌詞の再割り当て
-                                for (int cnt = 0; cnt < lyriclist[lyricindex].Count; cnt++)
-                                {
-                                    mynotes[noteIndex].Lyric = lyriclist[lyricindex][cnt].Lyric;
-                                    mynotes[noteIndex].FrameLength = dividedNoteFrameLength;
-                                    mynotes[noteIndex].defaultLyric = false;
-                                    mynotes[noteIndex].Key += lyriclist[lyricindex][cnt].keyUpdown;
-                                    mynotes[noteIndex].Note = KeyToNote(mynotes[noteIndex].Key);
-                                    mynotes[noteIndex].NoteLen = "" + NoteLengthToFrameLengthMap.FirstOrDefault(v => v.Value == dividedNoteFrameLength).Key;
-
-                                    noteIndex++;
-                                }
-                                mynotes[noteIndex - 1].FrameLength += difflen;
-
-                                lyricindex++;
-                            }
-                        }
-                        else
-                        {
-                            noteIndex++;
-                        }
-                        break; 
-                }
-            }
         }
 
     }

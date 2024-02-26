@@ -102,7 +102,8 @@ namespace voxsaycmd
                     try
                     {
                         var obj = new VoiceVoxNoteGenerator();
-                        var mynotes = obj.ParseSingString(opt.TalkText);
+                        var parseInfo = obj.ParseSingString(opt.TalkText);
+                        var mynotes =obj.ConvertScoreInfo(parseInfo);
 
                         if (opt.ExportNote)
                         {
@@ -130,7 +131,7 @@ namespace voxsaycmd
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(string.Format(@"sing error: {0}", e.Message));
+                        Console.WriteLine(string.Format(@"sing error: {0} {1}", e.Message, e.InnerException?.StackTrace ));
                     }
 
                 }

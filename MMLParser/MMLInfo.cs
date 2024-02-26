@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace voxsay
+namespace MMLParser
 {
-    public class MyMMLInfo
+    public class MMLInfo
     {
         public string MacroName { get; set; }
 

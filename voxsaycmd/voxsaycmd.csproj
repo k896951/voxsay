@@ -207,6 +207,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MMLParser\MMLParser.csproj">
+      <Project>{BC81B8CE-553F-44D9-A753-55AD9B0DC489}</Project>
+      <Name>MMLParser</Name>
+    </ProjectReference>
     <ProjectReference Include="..\voxsay\voxsay.csproj">
       <Project>{9732ba0f-c2dc-44e2-a3aa-e3669766696d}</Project>
       <Name>voxsay</Name>

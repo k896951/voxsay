@@ -3,23 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace voxsay
+namespace MMLParser
 {
-    public class LyricParser
+    /// <summary>
+    /// 歌詞解析クラス
+    /// </summary>
+    internal class LyricParser
     {
         private const string lyricParentChars1 =
-                                   @"[あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
-                                   @"アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
-                                   @"がぎぐげござじずぜぞだぢづでどばびぶべぼ" +
-                                   @"ガギグゲゴザジズゼゾダヂヅデドバビブベボ" +
-                                   @"ぱぴぷぺぽ" +
-                                   @"パピプペポ" +
-                                   @"ぁぃぅぇぉゃゅょァィゥェォャュョっッー" +
-                                   @"+\-" +
-                                   @"\(（\)）" +
-                                   @" 　\t]";          // タブ + 空白(半角 + 全角)
-
-        private const string lyricParentChars2 =
                                    @"[きぎ][ぇゃゅょ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
                                    @"[キギ][ェャュョ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
                                    @"[しじ][ぇゃゅょ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
@@ -46,6 +37,18 @@ namespace voxsay
                                    @"[リ][ェ]ー{0,1}[+\-]{0,1}\d{0,1}|" +
                                    @".[+\-]{0,1}\d{0,1}";
 
+        private const string lyricParentChars2 =
+                                   @"[あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
+                                   @"アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
+                                   @"がぎぐげござじずぜぞだぢづでどばびぶべぼ" +
+                                   @"ガギグゲゴザジズゼゾダヂヅデドバビブベボ" +
+                                   @"ぱぴぷぺぽ" +
+                                   @"パピプペポ" +
+                                   @"ぁぃぅぇぉゃゅょァィゥェォャュョっッー" +
+                                   @"+\-" +
+                                   @"\(（\)）" +
+                                   @" 　\t]";          // タブ + 空白(半角 + 全角)
+
         private const string lyricParentChars3 = @"[ー 　\t]"; // タブ + 空白(半角 + 全角)含む
         private const string lyricParentChars4 = @"(.)([+\-]{1,1}\d{0,})";
         private const string lyricParentChars5 = @"[っッ][+\-]{0,1}";
@@ -53,13 +56,16 @@ namespace voxsay
         private const string lyricGroupingOpen = @"（(";
         private const string lyricGroupingClose = @")）";
 
-        private Regex lyricParentChars1ex;
         private Regex lyricParentChars2ex;
+        private Regex lyricParentChars1ex;
         private Regex lyricParentChars3ex;
         private Regex lyricParentChars4ex;
         private Regex lyricParentChars5ex;
 
-        public LyricParser()
+        /// <summary>
+        /// Lyricパーサ
+        /// </summary>
+        internal LyricParser()
         {
             lyricParentChars1ex = new Regex(lyricParentChars1);
             lyricParentChars2ex = new Regex(lyricParentChars2);
@@ -68,13 +74,19 @@ namespace voxsay
             lyricParentChars5ex = new Regex(lyricParentChars4);
         }
 
-        public List<List<MyLyricInfo>> ParseLyricString(string lyric)
+        /// <summary>
+        /// 歌詞文字列を解析する
+        /// </summary>
+        /// <param name="lyric">歌詞文字列</param>
+        /// <returns>解析結果のリスト</returns>
+        /// <exception cref="Exception">書式不正を検出した時</exception>
+        internal List<List<LyricInfo>> ParseLyricString(string lyric)
         {
             int lyricposition = 0;
-            var planelist = new List<MyLyricInfo>();
+            var planelist = new List<LyricInfo>();
 
             // 歌詞単位で分解
-            var lp = lyricParentChars2ex.Matches(lyric).GetEnumerator();
+            var lp = lyricParentChars1ex.Matches(lyric).GetEnumerator();
             while (lp.MoveNext())
             {
                 // 歌詞に含まれる長音記号、空白、タブ、を消す
@@ -83,9 +95,9 @@ namespace voxsay
                 if (lyricChar != "")
                 {
                     // 歌詞として受け入れできない
-                    if (!lyricParentChars1ex.IsMatch(lyricChar)) throw new Exception(string.Format(@"lyric Part column {0}, 歌詞として受け入れられない文字 '{1}' があります", lyricposition + 1, lyricChar));
+                    if (!lyricParentChars2ex.IsMatch(lyricChar)) throw new Exception(string.Format(@"lyric Part column {0}, 歌詞として受け入れられない文字 '{1}' があります", lyricposition + 1, lyricChar));
 
-                    MyLyricInfo mylyric = new MyLyricInfo
+                    LyricInfo mylyric = new LyricInfo
                     {
                         Column = lyricposition,
                         Lyric = lyricChar,
@@ -117,16 +129,22 @@ namespace voxsay
             return lyricList;
         }
 
-        private List<List<MyLyricInfo>> AggregationLyricParts(List<MyLyricInfo> list)
+        /// <summary>
+        /// 歌詞の集約処理　※()内歌詞の集約
+        /// </summary>
+        /// <param name="list">集約前解析結果リスト</param>
+        /// <returns>集約処理を適用した解析結果リスト</returns>
+        /// <exception cref="Exception">書式不正を検出した時</exception>
+        private List<List<LyricInfo>> AggregationLyricParts(List<LyricInfo> list)
         {
-            List<List<MyLyricInfo>> parsed1stlist = new List<List<MyLyricInfo>>();
+            List<List<LyricInfo>> parsed1stlist = new List<List<LyricInfo>>();
 
             int index = 0;
 
             // 分割した歌詞の集約
             for (index = 0; index < list.Count; index++)
             {
-                parsed1stlist.Add(new List<MyLyricInfo>());
+                parsed1stlist.Add(new List<LyricInfo>());
 
                 if (!lyricGroupingOpen.Contains(list[index].Lyric) && !lyricGroupingClose.Contains(list[index].Lyric))
                 {
@@ -142,7 +160,7 @@ namespace voxsay
                     }
                     else
                     {
-                        parsed1stlist[parsed1stlist.Count - 1].Add(list[index]); //.LyriclyricParentChars4ex.Replace(, ""));
+                        parsed1stlist[parsed1stlist.Count - 1].Add(list[index]);
                     }
 
                 }

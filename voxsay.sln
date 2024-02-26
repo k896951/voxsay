@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "voxsay", "voxsay\voxsay.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "voxsaycmd", "voxsaycmd\voxsaycmd.csproj", "{1C61AEFD-B8FF-49F8-AC40-FA45B2D78A8F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MMLParser", "MMLParser\MMLParser.csproj", "{BC81B8CE-553F-44D9-A753-55AD9B0DC489}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{1C61AEFD-B8FF-49F8-AC40-FA45B2D78A8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C61AEFD-B8FF-49F8-AC40-FA45B2D78A8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C61AEFD-B8FF-49F8-AC40-FA45B2D78A8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC81B8CE-553F-44D9-A753-55AD9B0DC489}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC81B8CE-553F-44D9-A753-55AD9B0DC489}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC81B8CE-553F-44D9-A753-55AD9B0DC489}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC81B8CE-553F-44D9-A753-55AD9B0DC489}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

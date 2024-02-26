@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace voxsay
+namespace MMLParser
 {
-    public class MMLParser
+    /// <summary>
+    /// MML解析クラス
+    /// </summary>
+    internal class MMLParser
     {
         private const string MacroMatchReg0 = @"^[><STONRLCDEFGAB]";
         private const string MacroMatchReg1 = @"^([><]|S\d|[TON]\d{1,}|L\d{1,}\.{0,1}|R\d{0,}\.{0,1}|[CDEFGAB]\d{0,}\.{0,1}[#+\-]{0,1})";
         private const string MacroMatchReg2 = @"^([><]|S\d|[TON]\d{1,}|L\d{1,}\.{0,1}|R\d{0,}\.{0,1}|[CDEFGAB][#+\-]{0,1}\d{0,}\.{0,1})";
         private const string MacroNumMatchReg = @"\d{1,}";
         private const string MacroDotMatchReg = @"\.";
-        private const string MacroKeyModifierMatchReg = @"[#+\-]";
         private const string MacroNoteLenMatchReg = @"\d{0,}\.{0,1}";
 
         private const int MinBPM = 40;
@@ -24,6 +25,9 @@ namespace voxsay
         private string currentNotelen;
         private int mmlStyleMode = 1;
 
+        /// <summary>
+        /// ノートとサンプル歌詞のマップ
+        /// </summary>
         private Dictionary<string, string> NoteToDefaultLyricMap = new Dictionary<string, string>()
         {
             { "C",  "ど"},
@@ -50,14 +54,23 @@ namespace voxsay
             { "B",  "し"}
         };
 
-        public MMLParser()
+        /// <summary>
+        /// MMLパーサ
+        /// </summary>
+        internal MMLParser()
         {
             Bpm = 120;            // T120
             Octave = 4;           // O4
             DefaultNoteLen = "4"; // L4
         }
 
-        public MMLParser(int defaultTempo, int defaultOctave, string defaultNoteLen)
+        /// <summary>
+        /// MMLパーサ
+        /// </summary>
+        /// <param name="defaultTempo">解析開始時テンポ</param>
+        /// <param name="defaultOctave">解析開始時オクターブ</param>
+        /// <param name="defaultNoteLen">解析開始時音符・休符長さ</param>
+        internal MMLParser(int defaultTempo, int defaultOctave, string defaultNoteLen)
         {
 
             Bpm = 120;            // T120
@@ -69,6 +82,9 @@ namespace voxsay
             DefaultNoteLen = defaultNoteLen;
         }
 
+        /// <summary>
+        /// テンポ
+        /// </summary>
         public int Bpm
         {
             get
@@ -82,6 +98,9 @@ namespace voxsay
             }
         }
 
+        /// <summary>
+        /// オクターブ
+        /// </summary>
         public int Octave
         {
             get
@@ -95,6 +114,9 @@ namespace voxsay
             }
         }
 
+        /// <summary>
+        /// 音符・休符長さ
+        /// </summary>
         public string DefaultNoteLen
         {
             get
@@ -108,6 +130,9 @@ namespace voxsay
             }
         }
 
+        /// <summary>
+        /// マクロスタイル
+        /// </summary>
         public int MmlStyle
         {
             get
@@ -121,11 +146,21 @@ namespace voxsay
             }
         }
 
+        /// <summary>
+        /// オクターブの範囲確認
+        /// </summary>
+        /// <param name="octave">オクターブ。0～9</param>
+        /// <returns>範囲にあるならTRUE</returns>
         private bool OctaveCheck(int octave)
         {
             return ((-1 < octave) && (octave < 10));
         }
 
+        /// <summary>
+        /// 長さ指定の範囲判定
+        /// </summary>
+        /// <param name="notelen">長さ。1,2,4,8,16,32,64,128 の8種類。付点が必要なら"."を最後に付与</param>
+        /// <returns>範囲にあるならTRUE</returns>
         private bool NoteLenCheck(string notelen)
         {
             string[] notelengthArray = { "1", "1.", "2", "2.", "4", "4.", "8", "8.", "16", "16.", "32", "32.", "64", "64.", "128", "128." };
@@ -133,11 +168,21 @@ namespace voxsay
             return notelengthArray.Contains(notelen);
         }
 
+        /// <summary>
+        /// 音符指定の判定
+        /// </summary>
+        /// <param name="note">音符。C,D,E,F,G,A,B の7種類。半音上げ下げが必要なら "#","-" を最後に付与</param>
+        /// <returns>範囲にあるならTRUE</returns>
         private bool NoteCheck(string note)
         {
             return NoteToDefaultLyricMap.ContainsKey(note);
         }
 
+        /// <summary>
+        /// 音符に紐づけるサンプル歌詞を得る
+        /// </summary>
+        /// <param name="note">音符。C,D,E,F,G,A,B の7種類。半音上げ下げが必要なら "#","-" を最後に付与</param>
+        /// <returns>対応するサンプル歌詞。対応しない場合は長さゼロの文字列</returns>
         private string NoteToSampleLyric(string note)
         {
             if (NoteCheck(note)) return NoteToDefaultLyricMap[note];
@@ -145,19 +190,50 @@ namespace voxsay
             return "";
         }
 
+        /// <summary>
+        /// キー範囲の判定
+        /// </summary>
+        /// <param name="key">キー。</param>
+        /// <returns></returns>
         private bool KeyCheck(int key)
         {
             return ((-1 < key) && (key < 128));
         }
 
+        /// <summary>
+        /// キーから対応する音符の文字列を得る
+        /// </summary>
+        /// <param name="key">キー。0～127</param>
+        /// <returns>キーから算出した音符の文字列</returns>
+        private string KeyToNote(int key)
+        {
+            Dictionary<int, string> map = new Dictionary<int, string>()
+            {
+                { 0,"C"}, { 1,"C#"},{ 2,"D"}, { 3,"D#"},{ 4,"E"}, { 5,"F"}, { 6,"F#"},{ 7,"G"}, { 8,"G#"},{ 9,"A"}, {10,"A#"},{11,"B"}
+            };
+
+            return map[key % 12];
+        }
+
+        /// <summary>
+        /// マクロスタイルの確認
+        /// </summary>
+        /// <param name="style">スタイル</param>
+        /// <returns>指定が正しければTRUE</returns>
         private bool MmlStyleCheck(int style)
         {
             return ((0 < style) && (style < 3));
         }
 
-        public List<MyMMLInfo> ParseMMLString(string mmlstr)
+        /// <summary>
+        /// MML文字列を解析する
+        /// </summary>
+        /// <param name="mmlstr">MML文字列</param>
+        /// <returns>解析結果のリスト</returns>
+        /// <exception cref="Exception">書式不正を検出した時</exception>
+        internal List<MMLInfo> ParseMMLString(string mmlstr)
         {
-            List<MyMMLInfo> mmlInfo = new List<MyMMLInfo>();
+            List<MMLInfo> mmlInfo = new List<MMLInfo>();
             string MacroMatchReg = "";
             string localMML = mmlstr.ToUpper();
 
@@ -192,7 +268,7 @@ namespace voxsay
                 }
 
                 // MML要素生成
-                var mml = new MyMMLInfo();
+                var mml = new MMLInfo();
                 mmlInfo.Add(mml);
 
                 // マクロ名（先頭１文字） 
@@ -203,9 +279,6 @@ namespace voxsay
 
                 // 付点(".")の指定があるか否か
                 var dot = Regex.IsMatch(token, MacroDotMatchReg);
-
-                // キー修飾(#,+,-)があるか否か
-                var keyModify = Regex.IsMatch(token, MacroKeyModifierMatchReg);
 
                 mml.MacroName = macro;
                 mml.NoteLen = DefaultNoteLen;

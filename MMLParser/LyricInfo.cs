@@ -1,6 +1,6 @@
-﻿namespace voxsay
+﻿namespace MMLParser
 {
-    public class MyLyricInfo
+    public class LyricInfo
     {
         public int Column { get; set; }
 
