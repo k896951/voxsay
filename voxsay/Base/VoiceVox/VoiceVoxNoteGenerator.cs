@@ -77,25 +77,6 @@ namespace voxsay
         }
 
         /// <summary>
-        /// 楽譜に設定するフレーム数計算
-        /// </summary>
-        /// <param name="tempo">テンポ</param>
-        /// <param name="notelen">ノート長</param>
-        /// <returns>フレーム数</returns>
-        private int CalcFrameLength(int tempo, string notelen)
-        {
-            double FrameLength = (60.0 / tempo) / frameDuration; // 指定テンポ時４分音符のフレーム数
-
-            if (NoteLengthToCoefficientMap.ContainsKey(notelen))
-            {
-                return Convert.ToInt32(FrameLength * NoteLengthToCoefficientMap[notelen]);
-            }
-
-            return 0;
-        }
-
-
-        /// <summary>
         /// キーからノートを計算する
         /// </summary>
         /// <param name="key">キー 0～127</param>
