@@ -13,8 +13,8 @@ namespace MMLParser
         private int currentTempo;
         private int currentOctave;
         private string currentNotelen;
-        private LyricParser lyricParser;
-        private MMLParser mmlParser;
+        private readonly LyricParser lyricParser;
+        private readonly MMLParser mmlParser;
 
         private const double tickDuration = 0.00104166666666666666666666666667; // BPM=120時、1tick辺りの時間
 
