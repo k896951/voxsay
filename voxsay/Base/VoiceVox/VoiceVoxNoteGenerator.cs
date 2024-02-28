@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Text;
-using System.Text.RegularExpressions;
 using voxsay.Base.VoiceVox;
 using MMLParser;
-using System.Net.Http.Headers;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
-using System.ComponentModel.Design;
 
 namespace voxsay
 {
@@ -20,31 +15,9 @@ namespace voxsay
         //private string currentNotelen;
         private Parser mmlParser;
 
-        private const double frameDuration = 0.01075268817204301075268817204301; // BPM=120時、１フレームの時間
-        private const double frameConvRate = 0.096875;                           // 46.5 ÷ 480 , VOICEVOXフレーム数への変換レート
-
-        /// <summary>
-        /// ノート長さと係数のマップ
-        /// </summary>
-        private readonly Dictionary<string, double> NoteLengthToCoefficientMap = new Dictionary<string, double>()
-        {
-            {   "1.",  9.0     },
-            {   "1" ,  6.0     },
-            {   "2.",  3.0     },
-            {   "2" ,  2.0     },
-            {   "4.",  1.5     },
-            {   "4" ,  1       },
-            {   "8.",  0.75    },
-            {   "8" ,  0.5     },
-            {  "16.",  0.375   },
-            {  "16" ,  0.25    },
-            {  "32.",  0.1875  },
-            {  "32" ,  0.125   },
-            {  "64.",  0.09375 },
-            {  "64",   0.0625  },
-            { "128.",  0.046875},
-            { "128" ,  0.03125 }
-        };
+        private const double frameDuration = 0.01075268817204301075268817204301;    // BPM=120時、１フレームの時間
+        private const double framsQuarterNote = 46.5;                               // BPM=120時、４分音符のフレーム数
+        private const double frameConvRate = 0.096875;                              // 46.5 ÷ 480 , VOICEVOXフレーム数への変換レート
 
         /// <summary>
         /// キー相対位置とノートのマップ
@@ -73,6 +46,17 @@ namespace voxsay
             get
             {
                 return frameDuration;
+            }
+        }
+
+        /// <summary>
+        /// 4分音符当たりのフレーム数
+        /// </summary>
+        public double FramsQuarterNote
+        {
+            get
+            {
+                return framsQuarterNote;
             }
         }
 
@@ -118,18 +102,14 @@ namespace voxsay
         /// <exception cref="Exception">解析中のエラー(書式エラーなど)</exception>
         public List<NoteInfo> ParseSingString(string singtext)
         {
-            List<NoteInfo> mynoteinfo = new List<NoteInfo>();
-
             try
             {
-                mynoteinfo = mmlParser.ParseSingString(singtext);
+                return mmlParser.ParseSingString(singtext);
             }
             catch (Exception e)
             {
                 throw new Exception(string.Format(@"{0}", e.Message), e);
             }
-
-            return mynoteinfo;
         }
 
         /// <summary>
@@ -170,7 +150,8 @@ namespace voxsay
                         {
                             Key = subNoteItem.Key,
                             Lyric = subNoteItem.Lyric,
-                            Frame_Length = subFrames
+                            Frame_Length = subFrames,
+                            NoteLen = subNoteItem.NoteLen
                         };
 
                         // 分割した音符のフレーム数合計
@@ -229,7 +210,7 @@ namespace voxsay
                 if(note.Key is null)
                 {
                     // "R"
-                    Console.WriteLine(@"{0,4:D}     {1,6:D} {2,1:G} {3,-6:D}", noteindex, note.Frame_Length, "", "R");
+                    Console.WriteLine(@"{0,4:D}     {1,6:D} {2,1:G} {3,-6:D}", noteindex, note.Frame_Length, "", "R" + note.NoteLen);
                 }
                 else
                 {
@@ -237,7 +218,7 @@ namespace voxsay
                     var noteStr = KeyToNote((int)note.Key);
                     var noteOctave = KeyToOctave((int)note.Key);
 
-                    Console.WriteLine(@"{0,4:D} {1,3:G} {2,6:D} {3,1:G} {4,-6:D} {5}", noteindex, note.Key, note.Frame_Length, noteOctave, noteStr, note.Lyric);
+                    Console.WriteLine(@"{0,4:D} {1,3:G} {2,6:D} {3,1:G} {4,-6:D} {5}", noteindex, note.Key, note.Frame_Length, noteOctave, noteStr + note.NoteLen, note.Lyric);
                 }
 
                 noteindex++;
