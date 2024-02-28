@@ -13,5 +13,8 @@ namespace voxsay
 
         [DataMember(Name = "lyric")]
         public string Lyric { get; set; }
+
+        [DataMember(Name = "notelen")]
+        public string NoteLen { get; set; }
     }
 }
