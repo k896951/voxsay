@@ -119,7 +119,7 @@ namespace MMLParser
         }
 
         /// <summary>
-        /// 1tick辺りの時間
+        /// 4分音符当たりのtick数
         /// </summary>
         public double TicksQuaterNote
         {
