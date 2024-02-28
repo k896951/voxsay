@@ -16,15 +16,16 @@ namespace MMLParser
         private readonly LyricParser lyricParser;
         private readonly MMLParser mmlParser;
 
-        private const double tickDuration = 0.00104166666666666666666666666667; // BPM=120時、1tick辺りの時間
+        private const double tickDuration = 0.00104166666666666666666666666667;     // BPM=120時、1tick辺りの時間
+        private const double ticksQuarterNote = 0.00104166666666666666666666666667; // BPM=120時、４分音符のtick数
 
         /// <summary>
         /// 音符の長さと係数のマップ
         /// </summary>
         private readonly Dictionary<string, double> NoteLengthToCoefficientMap = new Dictionary<string, double>()
         {
-            {   "1.",  9.0     },
-            {   "1" ,  6.0     },
+            {   "1.",  6.0     },
+            {   "1" ,  4.0     },
             {   "2.",  3.0     },
             {   "2" ,  2.0     },
             {   "4.",  1.5     },
@@ -114,6 +115,17 @@ namespace MMLParser
             get
             {
                 return tickDuration;
+            }
+        }
+
+        /// <summary>
+        /// 1tick辺りの時間
+        /// </summary>
+        public double TicksQuaterNote
+        {
+            get
+            {
+                return ticksQuarterNote;
             }
         }
 
