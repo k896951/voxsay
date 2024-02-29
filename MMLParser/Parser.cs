@@ -288,14 +288,85 @@ namespace MMLParser
         public List<NoteInfo> ParseSingFile(string filePath)
         {
             List<NoteInfo> notelist = new List<NoteInfo>();
+            int linecounter = 1;
 
             using (var fp = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             using (var sr = new StreamReader(fp))
             {
                 while(!sr.EndOfStream)
                 {
-                    notelist.AddRange(ParseSingString(sr.ReadLine()));
+                    try
+                    {
+                        notelist.AddRange(ParseSingString(sr.ReadLine()));
+                    }
+                    catch (Exception e)
+                    {
+                        sr?.Close();
+                        fp?.Close();
+
+                        throw new Exception(string.Format(@"line {0}, {1}", linecounter, e.Message));
+                    }
+
+                    linecounter++;
                 }
+
+                sr.Close();
+                fp.Close();
+            }
+
+            return notelist;
+        }
+
+        /// <summary>
+        /// 歌詞、MMLの文字列からノート情報のリストを生成する
+        /// </summary>
+        /// <param name="filePath">歌詞、MMLの格納ファイル</param>
+        /// <returns>生成されたノード情報のリスト</returns>
+        /// <exception cref="Exception"></exception>
+        public List<List<NoteInfo>> ParseSingFile2(string filePath)
+        {
+            List<List<NoteInfo>> notelist = new List<List<NoteInfo>>();
+            int linecounter = 1;
+            Stream stream;
+
+            try
+            {
+                switch (filePath)
+                {
+                    case "-":
+                        stream = Console.OpenStandardInput();
+                        break;
+
+                    default:
+                        stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format(@"{0}", e.Message));
+            }
+
+
+            using (var sr = new StreamReader(stream))
+            {
+                while (!sr.EndOfStream)
+                {
+                    try
+                    {
+                        notelist.Add(ParseSingString(sr.ReadLine()));
+                    }
+                    catch (Exception e)
+                    {
+                        sr?.Close();
+
+                        throw new Exception(string.Format(@"line {0}, {1}", linecounter, e.Message));
+                    }
+
+                    linecounter++;
+                }
+
+                sr.Close();
             }
 
             return notelist;

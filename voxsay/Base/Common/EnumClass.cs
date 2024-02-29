@@ -17,4 +17,11 @@ namespace voxsay
         sapi,
         voicevoxnemo,
     }
+
+    public enum WavGenTypeEnum
+    {
+        allnote,
+        splitnote
+    }
+
 }

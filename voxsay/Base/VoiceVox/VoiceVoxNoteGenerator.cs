@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Linq;
 using voxsay.Base.VoiceVox;
 using MMLParser;
 
@@ -118,11 +119,11 @@ namespace voxsay
         /// <param name="filePath">MML文字列、または歌詞付きのMML文字列格納ファイル</param>
         /// <returns>解析結果の情報リスト</returns>
         /// <exception cref="Exception">解析中のエラー(書式エラーなど)</exception>
-        public List<NoteInfo> ParseSingFile(string filePath)
+        public List<List<NoteInfo>> ParseSingFile(string filePath)
         {
             try
             {
-                return mmlParser.ParseSingFile(filePath);
+                return mmlParser.ParseSingFile2(filePath);
             }
             catch (Exception e)
             {
@@ -193,6 +194,83 @@ namespace voxsay
         }
 
         /// <summary>
+        /// 情報リストから VOICEVOX API /sing_frame_audio_query で利用する楽譜情報へ変換する
+        /// </summary>
+        /// <param name="mynoteinfo">情報リスト</param>
+        /// <returns>楽譜情報(VOICEVOXのノート情報)</returns>
+        /// <exception cref="Exception">変換中のエラー</exception>
+        public VoiceVoxNotes ConvertScoreInfo(List<List<NoteInfo>> mynoteinfo)
+        {
+            var voiceVoxNote = new VoiceVoxNotes();
+            int linecounter = 1;
+            bool rskip = false;
+
+            voiceVoxNote.Notes = new List<VoiceVoxNote>();
+            try
+            {
+                foreach(var listItem in mynoteinfo)
+                {
+                    var scoreitem = ConvertScoreInfo(listItem);
+
+                    if(!rskip)
+                    {
+                        voiceVoxNote.Notes.AddRange(scoreitem.Notes);
+                        rskip = true;
+                    }
+                    else
+                    {
+                        if ((scoreitem.Notes[0].Frame_Length == 2) && (scoreitem.Notes[0].Key is null))
+                        {
+                            voiceVoxNote.Notes.AddRange(scoreitem.Notes.Where((v,idx)=>idx>0).ToList());
+                        }
+                        else
+                        {
+                            voiceVoxNote.Notes.AddRange(scoreitem.Notes);
+                        }
+                    }
+
+                    linecounter++;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format(@"line {0}, {1}", linecounter, e.Message), e);
+            }
+
+            return voiceVoxNote;
+        }
+
+        /// <summary>
+        /// 情報リストから VOICEVOX API /sing_frame_audio_query で利用する楽譜情報リストへ変換する
+        /// </summary>
+        /// <param name="mynoteinfo">情報リスト</param>
+        /// <returns>楽譜情報(VOICEVOXのノート情報)</returns>
+        /// <exception cref="Exception">変換中のエラー</exception>
+        public List<VoiceVoxNotes> ConvertScoreInfoList(List<List<NoteInfo>> mynoteinfo)
+        {
+            var voiceVoxNoteList = new List<VoiceVoxNotes>();
+            int linecounter = 1;
+
+            try
+            {
+                foreach (var listItem in mynoteinfo)
+                {
+                    var scoreitem = ConvertScoreInfo(listItem);
+
+                    if(scoreitem.Notes.Count > 0) voiceVoxNoteList.Add(ConvertScoreInfo(listItem));
+
+                    linecounter++;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format(@"line {0}, {1}", voiceVoxNoteList.Count - 1, e.Message), e);
+            }
+
+            return voiceVoxNoteList;
+        }
+
+        /// <summary>
         /// VOICEVOX API /sing_frame_audio_query で利用する楽譜情報をJSONでエクスポートする
         /// </summary>
         /// <param name="mynotes">ノート情報</param>
@@ -216,7 +294,7 @@ namespace voxsay
         /// <summary>
         /// 楽譜情報の内容を表示する
         /// </summary>
-        /// <param name="mynotes">ノート情報</param>
+        /// <param name="score">ノート情報</param>
         public void PrintAssignInfo(VoiceVoxNotes score)
         {
             Console.WriteLine(@"   # KEY FRAMES O NOTE   Lyric");
@@ -242,7 +320,20 @@ namespace voxsay
                 noteindex++;
             }
 
+            Console.WriteLine(@"");
+
         }
 
+        /// <summary>
+        /// 楽譜情報の内容を表示する
+        /// </summary>
+        /// <param name="score">ノート情報</param>
+        /// <param name="line">行</param>
+        public void PrintAssignInfo(VoiceVoxNotes score, int line)
+        {
+            Console.WriteLine(@"LINE {0}", line);
+
+            PrintAssignInfo(score);
+        }
     }
 }

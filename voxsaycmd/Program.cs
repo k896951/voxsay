@@ -1,9 +1,11 @@
 ﻿using MMLParser;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Text.RegularExpressions;
 using voxsay;
+using voxsay.Base.VoiceVox;
 
 namespace voxsaycmd
 {
@@ -97,6 +99,7 @@ namespace voxsaycmd
                 if (opt.PostPhonemeLength != null) pm.postPhonemeLength = (double)opt.PostPhonemeLength;
                 if (opt.OutputSamplingRate != null) pm.outputSamplingRate = (int)opt.OutputSamplingRate;
 
+                Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
 
                 // とりあえずの呼び出し処理を追加
                 if (opt.RenderingMode=="sing")
@@ -105,47 +108,93 @@ namespace voxsaycmd
                     {
                         var obj = new VoiceVoxNoteGenerator();
 
-                        List<NoteInfo> parseInfo;
-
                         if (("" + opt.MMLfilename) == "")
                         {
-                            parseInfo = obj.ParseSingString(opt.TalkText);
+                            var parseInfo = obj.ParseSingString(opt.TalkText);
 
+                            var notes = obj.ConvertScoreInfo(parseInfo);
+
+                            if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", obj.ExportNotes(notes));
+                            if (opt.PrintNote) obj.PrintAssignInfo(notes);
+
+                            if (opt.SaveFile != null)
+                            {
+                                string f = opt.SaveFile;
+
+                                if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
+
+                                if (!api.SaveSong((int)opt.Index, pm, notes, f)) rcd = 8;
+                            }
+                            else
+                            {
+                                if (!api.Sing((int)opt.Index, pm, notes)) rcd = 8;
+                            }
                         }
                         else
                         {
-                            parseInfo = obj.ParseSingFile(opt.MMLfilename);
+                            var parseInfoList = obj.ParseSingFile(opt.MMLfilename);
+
+                            switch (opt.WaveGenType)
+                            {
+                                case WavGenTypeEnum.allnote:
+                                    var notes = obj.ConvertScoreInfo(parseInfoList);
+
+                                    if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", obj.ExportNotes(notes));
+                                    if (opt.PrintNote) obj.PrintAssignInfo(notes);
+
+                                    if (opt.SaveFile != null)
+                                    {
+                                        string f = opt.SaveFile;
+
+                                        if (!ext.IsMatch(f)) f = string.Format(@"{0}.wav", f);
+
+                                        if (!api.SaveSong((int)opt.Index, pm, notes, f)) rcd = 8;
+                                    }
+                                    else
+                                    {
+                                        if (!api.Sing((int)opt.Index, pm, notes)) rcd = 8;
+                                    }
+
+                                    break;
+
+                                case WavGenTypeEnum.splitnote:
+                                    int fileTailNumber = 1;
+                                    foreach(var noteItem in parseInfoList)
+                                    {
+                                        var note = obj.ConvertScoreInfo(noteItem);
+
+                                        if (note.Notes.Count > 1)
+                                        {
+                                            if (opt.PrintNote) obj.PrintAssignInfo(note, fileTailNumber);
+
+                                            if (opt.SaveFile != null)
+                                            {
+                                                string f = opt.SaveFile;
+
+                                                if (ext.IsMatch(f)) f = ext.Replace(f, "");
+                                                f = string.Format(@"{0}_{1:D8}.wav", f, fileTailNumber);
+
+                                                if (!api.SaveSong((int)opt.Index, pm, note, f)) rcd = 8;
+                                            }
+                                            else
+                                            {
+                                                if (!api.Sing((int)opt.Index, pm, note)) rcd = 8;
+                                            }
+                                        }
+
+                                        fileTailNumber++;
+                                    }
+
+                                    break;
+                            }
+
                         }
 
-                        var mynotes =obj.ConvertScoreInfo(parseInfo);
-
-                        if (opt.ExportNote)
-                        {
-                            File.WriteAllText(@".\MyScore.json", obj.ExportNotes(mynotes));
-                        }
-
-                        if (opt.PrintNote)
-                        {
-                            obj.PrintAssignInfo(mynotes);
-                        }
-
-                        if (opt.SaveFile != null)
-                        {
-                            string f = opt.SaveFile;
-                            Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
-
-                            if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
-
-                            if (!api.SaveSong((int)opt.Index, pm, mynotes, f)) rcd = 8;
-                        }
-                        else
-                        {
-                            if (!api.Sing((int)opt.Index, pm, mynotes)) rcd = 8;
-                        }
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(string.Format(@"sing error: {0} {1}", e.Message, e.InnerException?.StackTrace ));
+                        //Console.WriteLine(string.Format(@"sing error: {0} {1}", e.Message, e.InnerException?.StackTrace ));
+                        Console.WriteLine(string.Format(@"sing error: {0}", e.Message));
                     }
 
                 }
@@ -154,7 +203,6 @@ namespace voxsaycmd
                     if (opt.SaveFile != null)
                     {
                         string f = opt.SaveFile;
-                        Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
 
                         if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
 
