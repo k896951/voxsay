@@ -30,6 +30,7 @@ namespace voxsaycmd
         public string RenderingMode { get; private set; } = null;
         public bool ExportNote { get; private set; } = false;
         public bool PrintNote { get; private set; } = false;
+        public string MMLfilename { get; private set; } = "";
 
         private string ConfFileNamee = @".\voxsayconf.json";
 
@@ -137,6 +138,19 @@ namespace voxsaycmd
                         else
                         {
                             Console.WriteLine(@"Error: Incorrect save specification.");
+                            IsSafe = false;
+                        }
+                        break;
+
+                    case "-mf":
+                        if (i + 1 <= args.Length)
+                        {
+                            MMLfilename = args[i + 1];
+                            i++;
+                        }
+                        else
+                        {
+                            Console.WriteLine(@"Error: Incorrect mf specification.");
                             IsSafe = false;
                         }
                         break;
@@ -411,6 +425,7 @@ namespace voxsaycmd
                     Index = json.Index;
                     OutputDevice = json.OutputDevice;
                     RenderingMode = json.RenderingMode;
+                    MMLfilename = json.MMLfilename;
                 }
             }
         }

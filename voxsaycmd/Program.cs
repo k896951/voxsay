@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MMLParser;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using voxsay;
@@ -102,7 +104,19 @@ namespace voxsaycmd
                     try
                     {
                         var obj = new VoiceVoxNoteGenerator();
-                        var parseInfo = obj.ParseSingString(opt.TalkText);
+
+                        List<NoteInfo> parseInfo;
+
+                        if (("" + opt.MMLfilename) == "")
+                        {
+                            parseInfo = obj.ParseSingString(opt.TalkText);
+
+                        }
+                        else
+                        {
+                            parseInfo = obj.ParseSingFile(opt.MMLfilename);
+                        }
+
                         var mynotes =obj.ConvertScoreInfo(parseInfo);
 
                         if (opt.ExportNote)

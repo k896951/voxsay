@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -276,6 +277,28 @@ namespace MMLParser
             }
 
             return mynoteinfo;
+        }
+
+        /// <summary>
+        /// 歌詞、MMLの文字列からノート情報のリストを生成する
+        /// </summary>
+        /// <param name="filePath">歌詞、MMLの格納ファイル</param>
+        /// <returns>生成されたノード情報のリスト</returns>
+        /// <exception cref="Exception"></exception>
+        public List<NoteInfo> ParseSingFile(string filePath)
+        {
+            List<NoteInfo> notelist = new List<NoteInfo>();
+
+            using (var fp = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var sr = new StreamReader(fp))
+            {
+                while(!sr.EndOfStream)
+                {
+                    notelist.AddRange(ParseSingString(sr.ReadLine()));
+                }
+            }
+
+            return notelist;
         }
 
         /// <summary>

@@ -43,5 +43,8 @@ namespace voxsaycmd
 
         [DataMember(Name = "renderingmode")]
         public string RenderingMode { get; private set; } = null;
+
+        [DataMember(Name = "mf")]
+        public string MMLfilename { get; private set; } = null;
     }
 }

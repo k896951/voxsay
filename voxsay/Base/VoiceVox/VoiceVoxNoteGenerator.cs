@@ -113,6 +113,24 @@ namespace voxsay
         }
 
         /// <summary>
+        /// 解析を行って情報リストを作成する
+        /// </summary>
+        /// <param name="filePath">MML文字列、または歌詞付きのMML文字列格納ファイル</param>
+        /// <returns>解析結果の情報リスト</returns>
+        /// <exception cref="Exception">解析中のエラー(書式エラーなど)</exception>
+        public List<NoteInfo> ParseSingFile(string filePath)
+        {
+            try
+            {
+                return mmlParser.ParseSingFile(filePath);
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format(@"{0}", e.Message), e);
+            }
+        }
+
+        /// <summary>
         /// 情報リストから VOICEVOX API /sing_frame_audio_query で利用する楽譜情報へ変換する
         /// </summary>
         /// <param name="mynoteinfo">情報リスト</param>
