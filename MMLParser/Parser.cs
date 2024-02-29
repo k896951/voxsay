@@ -393,7 +393,7 @@ namespace MMLParser
                                 for (int cnt = 0; cnt < (lyriclist[lyricindex].Count - 1); cnt++)
                                 {
                                     var newSubNoteItem = new SubNoteInfo();
-                                    notelist[noteIndex].Notes.Insert(noteIndex, newSubNoteItem);
+                                    notelist[noteIndex].Notes.Insert(0, newSubNoteItem);
                                 }
 
                                 // 歌詞の再割り当て
