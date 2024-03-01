@@ -445,15 +445,15 @@ namespace voxsaycmd
                     RenderingMode = json.RenderingMode;
 
                     // -sf は -mf が定義されたら上書きされる
-                    if (json.MMLfilenameS != "")
+                    if (json.InputfilenameS != "")
                     {
-                        Inputfilename = json.MMLfilenameS;
+                        Inputfilename = json.InputfilenameS;
                         SingWaveGenType = SingWavGenTypeEnum.splitnote;
                     }
                     // -mf が優先される
-                    if (json.MMLfilenameM != "")
+                    if (json.InputfilenameM != "")
                     {
-                        Inputfilename = json.MMLfilenameM;
+                        Inputfilename = json.InputfilenameM;
                         SingWaveGenType = SingWavGenTypeEnum.allnote;
                     }
                 }
