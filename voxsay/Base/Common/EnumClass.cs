@@ -24,4 +24,9 @@ namespace voxsay
         splitnote
     }
 
+    public enum TalkWavGenTypeEnum
+    {
+        allline,
+        splitline
+    }
 }

@@ -33,6 +33,7 @@ namespace voxsaycmd
         public bool PrintNote { get; private set; } = false;
         public string Inputfilename { get; private set; } = "";
         public SingWavGenTypeEnum SingWaveGenType { get; private set; } = SingWavGenTypeEnum.allnote;
+        public TalkWavGenTypeEnum TalkWaveGenType { get; private set; } = TalkWavGenTypeEnum.allline;
 
         private string ConfFileNamee = @".\voxsayconf.json";
 
@@ -149,6 +150,7 @@ namespace voxsaycmd
                         {
                             Inputfilename = args[i + 1];
                             SingWaveGenType = SingWavGenTypeEnum.allnote;
+                            TalkWaveGenType = TalkWavGenTypeEnum.allline;
                             i++;
                         }
                         else
@@ -163,6 +165,7 @@ namespace voxsaycmd
                         {
                             Inputfilename = args[i + 1];
                             SingWaveGenType = SingWavGenTypeEnum.splitnote;
+                            TalkWaveGenType = TalkWavGenTypeEnum.splitline;
                             i++;
                         }
                         else
@@ -449,12 +452,14 @@ namespace voxsaycmd
                     {
                         Inputfilename = json.InputfilenameS;
                         SingWaveGenType = SingWavGenTypeEnum.splitnote;
+                        TalkWaveGenType = TalkWavGenTypeEnum.splitline;
                     }
                     // -mf が優先される
                     if (json.InputfilenameM != "")
                     {
                         Inputfilename = json.InputfilenameM;
                         SingWaveGenType = SingWavGenTypeEnum.allnote;
+                        TalkWaveGenType = TalkWavGenTypeEnum.allline;
                     }
                 }
             }

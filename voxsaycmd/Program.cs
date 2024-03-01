@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using voxsay;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace voxsaycmd
 {
@@ -102,16 +104,16 @@ namespace voxsaycmd
                 {
                     try
                     {
-                        var obj = new VoiceVoxNoteGenerator();
+                        var mmlObj = new VoiceVoxNoteGenerator();
 
                         if (("" + opt.Inputfilename) == "")
                         {
-                            var parseInfo = obj.ParseSingString(opt.TalkText);
+                            var parseInfo = mmlObj.ParseSingString(opt.TalkText);
 
-                            var notes = obj.ConvertScoreInfo(parseInfo);
+                            var notes = mmlObj.ConvertScoreInfo(parseInfo);
 
-                            if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", obj.ExportNotes(notes));
-                            if (opt.PrintNote) obj.PrintAssignInfo(notes);
+                            if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", mmlObj.ExportNotes(notes));
+                            if (opt.PrintNote) mmlObj.PrintAssignInfo(notes);
 
                             if (opt.SaveFile != null)
                             {
@@ -128,15 +130,15 @@ namespace voxsaycmd
                         }
                         else
                         {
-                            var parseInfoList = obj.ParseSingFile(opt.Inputfilename);
+                            var parseInfoList = mmlObj.ParseSingFile(opt.Inputfilename);
 
                             switch (opt.SingWaveGenType)
                             {
                                 case SingWavGenTypeEnum.allnote:
-                                    var notes = obj.ConvertScoreInfo(parseInfoList);
+                                    var notes = mmlObj.ConvertScoreInfo(parseInfoList);
 
-                                    if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", obj.ExportNotes(notes));
-                                    if (opt.PrintNote) obj.PrintAssignInfo(notes);
+                                    if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", mmlObj.ExportNotes(notes));
+                                    if (opt.PrintNote) mmlObj.PrintAssignInfo(notes);
 
                                     if (opt.SaveFile != null)
                                     {
@@ -157,11 +159,11 @@ namespace voxsaycmd
                                     int fileTailNumber = 1;
                                     foreach (var noteItem in parseInfoList)
                                     {
-                                        var note = obj.ConvertScoreInfo(noteItem);
+                                        var note = mmlObj.ConvertScoreInfo(noteItem);
 
                                         if (note.Notes.Count > 1)
                                         {
-                                            if (opt.PrintNote) obj.PrintAssignInfo(note, fileTailNumber);
+                                            if (opt.PrintNote) mmlObj.PrintAssignInfo(note, fileTailNumber);
 
                                             if (opt.SaveFile != null)
                                             {
@@ -189,24 +191,105 @@ namespace voxsaycmd
                     }
                     catch (Exception e)
                     {
-                        //Console.WriteLine(string.Format(@"sing error: {0} {1}", e.Message, e.InnerException?.StackTrace ));
                         Console.WriteLine(string.Format(@"sing error: {0}", e.Message));
                     }
 
                 }
                 else
                 {
-                    if (opt.SaveFile != null)
+                    try
                     {
-                        string f = opt.SaveFile;
+                        if (("" + opt.Inputfilename) == "")
+                        {
+                            if (opt.SaveFile != null)
+                            {
+                                string f = opt.SaveFile;
 
-                        if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
+                                if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
 
-                        if (!api.Save((int)opt.Index, pm, opt.TalkText, f)) rcd = 8;
+                                if (!api.Save((int)opt.Index, pm, opt.TalkText, f)) rcd = 8;
+                            }
+                            else
+                            {
+                                if (!api.Speak((int)opt.Index, pm, opt.TalkText)) rcd = 8;
+                            }
+                        }
+                        else
+                        {
+                            Stream fp;
+
+                            if ("-" == opt.Inputfilename)
+                            {
+                                fp = Console.OpenStandardInput();
+                            }
+                            else
+                            {
+                                fp = new FileStream(opt.Inputfilename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                            }
+
+                            using (StreamReader sr = new StreamReader(fp))
+                            {
+                                switch (opt.TalkWaveGenType)
+                                {
+                                    case TalkWavGenTypeEnum.allline:
+                                        StringBuilder sb = new StringBuilder();
+                                        sb.Clear();
+
+                                        while (!sr.EndOfStream)
+                                        {
+                                            sb.AppendLine(sr.ReadLine());
+                                        }
+
+                                        if (opt.SaveFile != null)
+                                        {
+                                            string f = opt.SaveFile;
+
+                                            if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
+
+                                            if (!api.Save((int)opt.Index, pm, sb.ToString(), f)) rcd = 8;
+                                        }
+                                        else
+                                        {
+                                            if (!api.Speak((int)opt.Index, pm, sb.ToString())) rcd = 8;
+                                        }
+
+                                        break;
+
+                                    case TalkWavGenTypeEnum.splitline:
+                                        int fileTailNumber = 1;
+                                        while (!sr.EndOfStream)
+                                        {
+                                            if (opt.SaveFile != null)
+                                            {
+                                                string f = opt.SaveFile;
+
+                                                if (ext.IsMatch(f)) f = ext.Replace(f, "");
+                                                f = string.Format(@"{0}_{1:D8}.wav", f, fileTailNumber);
+
+                                                if (!api.Save((int)opt.Index, pm, sr.ReadLine(), f)) rcd = 8;
+                                            }
+                                            else
+                                            {
+                                                if (!api.Speak((int)opt.Index, pm, sr.ReadLine())) rcd = 8;
+                                            }
+
+                                            fileTailNumber++;
+
+                                        }
+
+                                        break;
+                                }
+
+                                sr?.Close();
+                            }
+
+                            fp?.Close();
+                        }
+
                     }
-                    else
+                    catch (Exception e)
                     {
-                        if (!api.Speak((int)opt.Index, pm, opt.TalkText)) rcd = 8;
+                        Console.WriteLine(string.Format(@"talk error: {0}", e.Message));
                     }
                 }
 
