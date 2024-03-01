@@ -1,11 +1,7 @@
-﻿using MMLParser;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using voxsay;
-using voxsay.Base.VoiceVox;
 
 namespace voxsaycmd
 {
@@ -102,13 +98,13 @@ namespace voxsaycmd
                 Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
 
                 // とりあえずの呼び出し処理を追加
-                if (opt.RenderingMode=="sing")
+                if (opt.RenderingMode == "sing")
                 {
                     try
                     {
                         var obj = new VoiceVoxNoteGenerator();
 
-                        if (("" + opt.MMLfilename) == "")
+                        if (("" + opt.Inputfilename) == "")
                         {
                             var parseInfo = obj.ParseSingString(opt.TalkText);
 
@@ -132,11 +128,11 @@ namespace voxsaycmd
                         }
                         else
                         {
-                            var parseInfoList = obj.ParseSingFile(opt.MMLfilename);
+                            var parseInfoList = obj.ParseSingFile(opt.Inputfilename);
 
-                            switch (opt.WaveGenType)
+                            switch (opt.SingWaveGenType)
                             {
-                                case WavGenTypeEnum.allnote:
+                                case SingWavGenTypeEnum.allnote:
                                     var notes = obj.ConvertScoreInfo(parseInfoList);
 
                                     if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", obj.ExportNotes(notes));
@@ -157,9 +153,9 @@ namespace voxsaycmd
 
                                     break;
 
-                                case WavGenTypeEnum.splitnote:
+                                case SingWavGenTypeEnum.splitnote:
                                     int fileTailNumber = 1;
-                                    foreach(var noteItem in parseInfoList)
+                                    foreach (var noteItem in parseInfoList)
                                     {
                                         var note = obj.ConvertScoreInfo(noteItem);
 

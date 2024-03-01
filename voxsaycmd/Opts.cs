@@ -31,8 +31,8 @@ namespace voxsaycmd
         public string RenderingMode { get; private set; } = null;
         public bool ExportNote { get; private set; } = false;
         public bool PrintNote { get; private set; } = false;
-        public string MMLfilename { get; private set; } = "";
-        public WavGenTypeEnum WaveGenType { get; private set; } = WavGenTypeEnum.allnote;
+        public string Inputfilename { get; private set; } = "";
+        public SingWavGenTypeEnum SingWaveGenType { get; private set; } = SingWavGenTypeEnum.allnote;
 
         private string ConfFileNamee = @".\voxsayconf.json";
 
@@ -147,8 +147,8 @@ namespace voxsaycmd
                     case "-mf":
                         if (i + 1 <= args.Length)
                         {
-                            MMLfilename = args[i + 1];
-                            WaveGenType = WavGenTypeEnum.allnote;
+                            Inputfilename = args[i + 1];
+                            SingWaveGenType = SingWavGenTypeEnum.allnote;
                             i++;
                         }
                         else
@@ -161,8 +161,8 @@ namespace voxsaycmd
                     case "-sf":
                         if (i + 1 <= args.Length)
                         {
-                            MMLfilename = args[i + 1];
-                            WaveGenType = WavGenTypeEnum.splitnote;
+                            Inputfilename = args[i + 1];
+                            SingWaveGenType = SingWavGenTypeEnum.splitnote;
                             i++;
                         }
                         else
@@ -447,14 +447,14 @@ namespace voxsaycmd
                     // -sf は -mf が定義されたら上書きされる
                     if (json.MMLfilenameS != "")
                     {
-                        MMLfilename = json.MMLfilenameS;
-                        WaveGenType = WavGenTypeEnum.splitnote;
+                        Inputfilename = json.MMLfilenameS;
+                        SingWaveGenType = SingWavGenTypeEnum.splitnote;
                     }
                     // -mf が優先される
                     if (json.MMLfilenameM != "")
                     {
-                        MMLfilename = json.MMLfilenameM;
-                        WaveGenType = WavGenTypeEnum.allnote;
+                        Inputfilename = json.MMLfilenameM;
+                        SingWaveGenType = SingWavGenTypeEnum.allnote;
                     }
                 }
             }

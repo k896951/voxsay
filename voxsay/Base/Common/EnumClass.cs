@@ -18,7 +18,7 @@ namespace voxsay
         voicevoxnemo,
     }
 
-    public enum WavGenTypeEnum
+    public enum SingWavGenTypeEnum
     {
         allnote,
         splitnote
