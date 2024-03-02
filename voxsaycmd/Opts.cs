@@ -36,6 +36,7 @@ namespace voxsaycmd
         public TalkWavGenTypeEnum TalkWaveGenType { get; private set; } = TalkWavGenTypeEnum.allline;
 
         private string ConfFileNamee = @".\voxsayconf.json";
+        private string VersionStr = "1.1.20";
 
         public Opts(string[] args)
         {
@@ -44,7 +45,7 @@ namespace voxsaycmd
 
             if (args.Length == 0)
             {
-                help();
+                Help();
                 return;
             }
 
@@ -402,6 +403,28 @@ namespace voxsaycmd
                             IsSafe = false;
                         }
                         break;
+
+                    case "-help":
+                        if (i + 1 <= args.Length)
+                        {
+                            switch (args[i + 1])
+                            {
+                                case "talk":
+                                    TalkHelp();
+                                    return;
+
+                                case "sing":
+                                    SingHelp();
+                                    return;
+                            }
+                            i++;
+                        }
+                        else
+                        {
+                            Console.WriteLine(@"Error: Incorrect help specification.");
+                            IsSafe = false;
+                        }
+                        break;
                 }
 
             }
@@ -465,42 +488,99 @@ namespace voxsaycmd
             }
         }
 
-        private void help()
+        private void Help()
         {
             Console.WriteLine(
                 @"
-voxsay command (c)2022,2023,2024 by k896951
+voxsay command {0} (c)2022,2023,2024 by k896951
 
-command line exsamples:
+common command line exsamples:
     voxsay -devlist
     voxsay -prodlist
-    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] -list
-    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
 
 Options:
     -devlist              : List playback device.
-    -prodlist             : List available local TTS products.
-    -prod TTS             : Select tts product.
-                              TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
-    -renderingmode MODE   : Select rendering mode. default is ""talk"".
-                              MODE := talk | sing
+    -prodlist             : List available local TTS products. * When option ""-renderingmode talk"" is specified
+
+
+talk command line exsamples:
+    voxsay [-renderingmode talk] <-prod TTS> [Options1] -list
+    voxsay [-renderingmode talk] <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
+    voxsay [-renderingmode talk] <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
+
+Options:
+    -renderingmode talk   : Select talk rendering mode. *default is ""talk"".
+    -prod TTS             : Select tts product. TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -list                 : List speakers for a given product.
+    -save FILENAME        : Save audio with specified file name.
+                            Example: -save Hellow  -> Output audio to file ""Hellow.wav"".
+                            Note: No audio playback with this option.
+    -index N              : specify the speaker index.
+                            Example: -index 4 -> use speaker index number 4.
+    -t TalkText           : TalkText to output in tts.
+                            Example : -t Hellow world! -> say ""Hello world!""
+    -mf TEXTFILE          : Output the contents of TEXTFILE in tts.
+                            Example : -mf comment.txt -> say all the contents of comment.txt.
+    -sf TEXTFILE          : Output the contents of TEXTFILE in tts.
+                            Example : -sf comment.txt -> say the contents of comment.txt by line.
+Note:
+    * Anything specified after -t is treated as tts text.
+
+
+sing command line exsamples (VOICEVOX ONLY):
+    voxsay <-renderingmode sing> [Options1] -list
+    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
+    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
+
+Options:
+    -renderingmode sing   : Select sing rendering mode.
+    -list                 : List singers for a given product.
+    -save FILENAME        : Save audio with specified file name.
+                            Example: -save Hellow  -> Output audio to file ""Hellow.wav"".
+                            Note: No audio playback with this option.
+    -index N              : specify the singer index.
+                            Example: -index 3003 -> use singer index number 3003.
+    -t MMLtext            : MMLtext to output in VOICEVOX.
+                            Example : -t CDEF -> sing ""Do Re Mi Fa""
+    -mf MMLTEXTFILE       : Output the contents of MMLTEXTFILE in VOICEVOX.
+                            Example : -mf comment.txt -> sing the contents of the comment.txt.
+    -sf MMLTEXTFILE       : Output the contents of MMLTEXTFILE in VOICEVOX.
+                            Example : -sf comment.txt -> sing the contents of comment.txt by line.
+Note:
+    * Anything specified after -t is treated as MML text.
+    * The renderingmode option is only for VOICEVOX.
+
+
+-t,-mf,-sf and -save combination:
+    -save sample.wav -t text       : Output sample.wav
+    -save sample.wav -mf textfile  : Output sample.wav
+    -save sample.wav -sf textfile  : Output sample_000001.wav, sample_000002.wav, …　Outputs a wav file for the number of lines in the textfile.
+
+
+help command line for Options1, Options2:
+    voxsay -help talk
+    voxsay -help sing
+"
+                , VersionStr );
+        }
+
+        private void TalkHelp()
+        {
+            Console.WriteLine(
+                @"
+talk option help
+
+Options1:
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
-    -list                 : List speakers for a given product.
 
-    -index N              : specify the speaker index.
-                            Example: -index 4 -> Speak with the 4th speaker.
+Options2:
+    -outputdevice DEV     : Change playback device.
+                            Example: -outputdevice ""OUT(UA-4FX)"" -> Output audio to device ""OUT(UA-4FX)""
 
     -samplingrate Hz      : Change audio sampling rate. Default is 44100 (44.1kHz).
                             Example : -samplingrate 8000 -> Change the sampling rate to 8kHz.
                             Note: Quantization bit number is 16bit only.
-
-    -save FILENAME        : Save audio with specified file name.
-                            Example: -save Hellow  -> Output audio to file ""Hellow.wav"".
-                            Note: No audio playback with this option.
-
-    -outputdevice DEV     : Change playback device.
-                            Example: -outputdevice ""OUT(UA-4FX)"" -> Output audio to device ""OUT(UA-4FX)""
 
     -speed P              : specify the speedScale.        Default: 1    Range:  0.5  .. 2    Step: 0.01
                                                            Default: 100  Range:  0    .. 100  Step: 1.00 * sapi 
@@ -511,18 +591,39 @@ Options:
     -prephonemelength P   : specify the prephonemelength.  Default: 0.1  Range:  0    .. 1.5  Step: 0.01
     -postphonemelength P  : specify the postphonemelength. Default: 0.1  Range:  0    .. 1.5  Step: 0.01
 
-    -t TALKTEXT           : Text to output in tts.
-                            Example : -t Hellow world! -> say ""Hello world!""
-
-        * Anything specified after -t is treated as tts text.
-        * Please refer to the value of the editor for each product for the range of P.
-
 Note:
-    If TTS is ""sapi"", only the following options are valid: -list, -save, -outputdevice, -speed, -volume, -t 
-
-    The renderingmode option is only for VOICEVOX.
+    Please refer to the value of the editor for each product for the range of P.
 "
             );
         }
+
+
+        private void SingHelp()
+        {
+            Console.WriteLine(
+                @"
+sing option help
+
+Options1:
+    -host                 : Host name of VOICEVOX service running.
+    -port                 : Port number of VOICEVOX service running.
+
+Options2:
+    -outputdevice DEV     : Change playback device.
+                            Example: -outputdevice ""OUT(UA-4FX)"" -> Output audio to device ""OUT(UA-4FX)""
+
+    -samplingrate Hz      : Change audio sampling rate. Default is 44100 (44.1kHz).
+                            Example : -samplingrate 8000 -> Change the sampling rate to 8kHz.
+                            Note: Quantization bit number is 16bit only.
+
+    -volume P             : specify the volumeScale. Default: 1 Range:0 .. 2 Step: 0.01
+
+Note:
+    Please refer to the value of the editor for each product for the range of P.
+"
+            );
+        }
+
+
     }
 }
