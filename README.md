@@ -1,7 +1,6 @@
 # voxsay
 
-voicevox | coeiroink/v2 | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用のCUIクライアント
-
+音声合成製品 VOICEVOX、VOICEVOX Nemo、COEIROINK/v2、LMROID、SHAREVOX、ITVOICE、 のREST APIを呼び出して音声再生するWindows用のCUIクライアント
 
 ## 使用方法
 
@@ -9,7 +8,6 @@ voicevox | coeiroink/v2 | lmroid | sharevox | itvoice のREST APIを呼び出し
 
 使用前に、各音声合成製品を起動します。
 その後にvoxsay.exeをオプション無しで実行するとヘルプが出ます。
-
 
 ローカルで稼働している製品一覧を確認します。
 ```
