@@ -2,72 +2,16 @@
 
 voicevox | coeiroink/v2 | lmroid | sharevox | itvoice のREST APIを呼び出して音声再生するWindows用のCUIクライアント
 
+
 ## 使用方法
 
-各音声合成製品を起動します。その後にvoxsay.exeをオプション無しで実行するとヘルプが出ます。
+[こちら](https://github.com/k896951/voxsay/wiki)を参照してください。
 
-```
-f:\sandbox\voxsay>voxsay
+使用前に、各音声合成製品を起動します。
+その後にvoxsay.exeをオプション無しで実行するとヘルプが出ます。
 
-voxsay command (c)2022,2023,2024 by k896951
-
-command line exsamples:
-    voxsay -devlist
-    voxsay -prodlist
-    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] -list
-    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
-
-Options:
-    -devlist              : List playback device.
-    -prodlist             : List available local TTS products.
-    -prod TTS             : Select tts product.
-                              TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
-    -renderingmode MODE   : Select rendering mode. default is "talk".
-                              MODE := talk | sing
-    -host                 : Host name of TTS service running.
-    -port                 : Port number of TTS service running.
-    -list                 : List speakers for a given product.
-
-    -index N              : specify the speaker index.
-                            Example: -index 4 -> Speak with the 4th speaker.
-
-    -samplingrate Hz      : Change audio sampling rate. Default is 44100 (44.1kHz).
-                            Example : -samplingrate 8000 -> Change the sampling rate to 8kHz.
-                            Note: Quantization bit number is 16bit only.
-
-    -save FILENAME        : Save audio with specified file name.
-                            Example: -save Hellow  -> Output audio to file "Hellow.wav".
-                            Note: No audio playback with this option.
-
-    -outputdevice DEV     : Change playback device.
-                            Example: -outputdevice "OUT(UA-4FX)" -> Output audio to device "OUT(UA-4FX)"
-
-    -speed P              : specify the speedScale.        Default: 1    Range:  0.5  .. 2    Step: 0.01
-                                                           Default: 100  Range:  0    .. 100  Step: 1.00 * sapi
-    -pitch P              : specify the pitchScale.        Default: 0    Range: -0.15 .. 0.15 Step: 0.01
-    -intonation P         : specify the intonationScale.   Default: 1    Range:  0    .. 2    Step: 0.01
-    -volume P             : specify the volumeScale.       Default: 1    Range:  0    .. 2    Step: 0.01
-                                                           Default: 0    Range: -10   .. 10   Step: 1.00 * sapi
-    -prephonemelength P   : specify the prephonemelength.  Default: 0.1  Range:  0    .. 1.5  Step: 0.01
-    -postphonemelength P  : specify the postphonemelength. Default: 0.1  Range:  0    .. 1.5  Step: 0.01
-
-    -t TALKTEXT           : Text to output in tts.
-                            Example : -t Hellow world! -> say "Hello world!"
-
-        * Anything specified after -t is treated as tts text.
-        * Please refer to the value of the editor for each product for the range of P.
-
-Note:
-    If TTS is "sapi", only the following options are valid: -list, -save, -outputdevice, -speed, -volume, -t
-
-    The renderingmode option is only for VOICEVOX.
-
-
-f:\sandbox\voxsay>
-```
 
 ローカルで稼働している製品一覧を確認します。
-
 ```
 f:\sandbox>voxsay -prodlist
 product: sapi
@@ -79,7 +23,6 @@ f:\sandbox>
 ```
 
 SHAREVOXの話者一覧でインデクスを確認します。
-
 ```
 f:\sandbox>voxsay -prod sharevox -list
 index: 0,  speaker:小春音アミ（ノーマル）
@@ -128,31 +71,10 @@ f:\sandbox>voxsay -prod sharevox -index 25 -volume 0.5 -t 早く寝てくださ�
 f:\sandbox>
 ```
 
-あとは各自オプションを試してください。
-
-### 定義ファイル
-
-オプションのいくつかは、voxsay.exeと同じフォルダに作成したJSONファイル voxsayconf.json で省略できます。
-```
-{
-	"prod":"voicevoxnemo",
-	"index":10003,
-	"speed":1.5,
-	"outputdevice":"EX-LDGC242HT (NVIDIA High Definition Audio)"
-}
-```
-この例だと、オプションを指定して上書きしない限り、voxsay は
-```
--prod voicevoxnemo -speed 1.5 -outputdevice "EX-LDGC242HT (NVIDIA High Definition Audio)" -index 10003
-```
-が指定されたものとして動作します。
-
-### 歌唱（VOICEVOX専用）
-
 オプション -prod voicevox, -renderingmode sing, を指定すると、VOICEVOX 0.16.1で利用可能になった歌唱APIを使って歌わせることができます。
 話者一覧でインデクスを確認します。-renderingmode talk の時と番号が異なるので注意してください。
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -list
+f:\sandbox>voxsay -prod voicevox -renderingmode sing -renderingmode sing -list
 index: 3000,  speaker:四国めたん（あまあま）
 index: 3001,  speaker:ずんだもん（あまあま）
 index: 3002,  speaker:四国めたん（ノーマル）
@@ -176,70 +98,23 @@ f:\sandbox>
 ```
 -t オプションで MMLを指定する事で歌唱が可能になります。ただし正確な実装ではありません。それらしいように仕上げただけです。
 
-| 指定値       | 説明                         |
-|--------------|------------------------------|
-| tempo_range  | 範囲は 30～800               |
-| octave_range | 範囲は 0～9                  |
-| key_range    | 範囲は 0～127                |
-| len          | "1", "1." , "2", "2." , "4", "4." , "8", "8." , "16", "16." , "32", "32." , "64", "64." , "128", "128."  |
-| style        | 1→スタイル1、2→スタイル2   |
 
-| マクロ                  | 説明                                                                 | 指定例                        |
-|-------------------------|----------------------------------------------------------------------|-------------------------------|
-| T&lt;tempo_range&gt;    | テンポを指定。                                                       | T60 → テンポ(BPM)に60を指定。　規定値はT120 |
-| O&lt;octave_range&gt;   | オクターブ指定。                                                     | O5 → オクターブを5に指定。　規定値はO4 |
-| &gt;                    | オクターブを1つ上げる。                                              |    |
-| &lt;                    | オクターブを1つ下げる。                                              |    |
-| L&lt;len&gt;            | 休符・音符の既定長さ指定。                                           | L8→音符・休符の既定長さを8分音符・休符に設定。　規定値はL4 |
-| R[len]                  | 休符。長さ省略時はマクロ"L"で指定した長さを適用する。                | R4→4分休符の指定 |
-| N&lt;key_range&gt;      | 再生するキー。再生時の長さはマクロ"L"で指定した長さを適用する。      | N60 → O4C と同じ |
-| S&lt;style&gt;          | 音符書式を変更する。                                                 | S2 → 音符書式をスタイル2に設定。　規定値はS1 |
-|  **マクロ(スタイル1)** |  **説明**                                                            |  **指定例**      |
-| C[len][#]               | 音符。ドに対応。"#"を付けると半音上げ。長さ省略時はマクロ"L"で指定した長さを適用する。                        | C →ドを指定  |
-| D[len][#-]              | 音符。レに対応。"#"を付けると半音上げ。"-"を付けると半音下げ。長さ省略時はマクロ"L"で指定した長さを適用する。 | D. →レの付点音符を指定  |
-| E[len][-]               | 音符。ミに対応。"-"を付けると半音下げ。長さ省略時はマクロ"L"で指定した長さを適用する。                        | E8 →ミの8分音符を指定  |
-| F[len][#]               | 音符。ファに対応。"#"を付けると半音上げ。長さ省略時はマクロ"L"で指定した長さを適用する。                      | F4. →ファの付点4分音符を指定  |
-| G[len][#-]              | 音符。ソに対応。"#"を付けると半音上げ。"-"を付けると半音下げ。長さ省略時はマクロ"L"で指定した長さを適用する。 | G# →ソの半音上げを指定  |
-| A[len][#-]              | 音符。ラに対応。"#"を付けると半音上げ。"-"を付けると半音下げ。長さ省略時はマクロ"L"で指定した長さを適用する。 | A16.# →ラの半音上げで付点16分音符を指定  |
-| B[len][-]               | 音符。シに対応。"-"を付けると半音下げ。長さ省略時はマクロ"L"で指定した長さを適用する。                        | B.- →シの半音下げ付点音符を指定  |
-|  **マクロ(スタイル2)** | **説明**                                                             | **指定例**     |
-| C[#][octave_range][.]   | 音符。ドに対応。"#"を付けると半音上げ。長さはマクロ"L"で指定した長さを適用する。                        | C →ドを指定  |
-| D[#-][octave_range][.]  | 音符。レに対応。"#"を付けると半音上げ。"-"を付けると半音下げ。長さはマクロ"L"で指定した長さを適用する。 | D. →レの付点音符を指定  |
-| E[-][octave_range][.]   | 音符。ミに対応。"-"を付けると半音下げ。長さはマクロ"L"で指定した長さを適用する。                        | E7 →オクターブ7のミを指定  |
-| F[#][octave_range][.]   | 音符。ファに対応。"#"を付けると半音上げ。長さはマクロ"L"で指定した長さを適用する。                      | F4. → オクターブ4のファの付点音符を指定  |
-| G[#-][octave_range][.]  | 音符。ソに対応。"-"を付けると半音下げ。長さはマクロ"L"で指定した長さを適用する。                        | G# →ソの半音上げを指定  |
-| A[#-][octave_range][.]  | 音符。ラに対応。"#"を付けると半音上げ。"-"を付けると半音下げ。長さはマクロ"L"で指定した長さを適用する。 | A#6. →オクターブ6のラの半音上げで付点音符を指定  |
-| B[-][octave_range][.]   | 音符。シに対応。"-"を付けると半音下げ。長さはマクロ"L"で指定した長さを適用する。                        | B-. →シの半音下げ付点音符を指定  |
+### 定義ファイル
 
-
-ちゃんと歌詞を付けたい？歌詞の後にコロン(:)で音符を続けると、歌詞を割当てて歌唱させることができます。
+オプションのいくつかは、voxsay.exeと同じフォルダに作成したJSONファイル voxsayconf.json で省略できます。
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t かしをわりあてる:O4CDEFGABO5C
-
-f:\sandbox>
+{
+	"prod":"voicevoxnemo",
+	"index":10003,
+	"speed":1.5,
+	"outputdevice":"EX-LDGC242HT (NVIDIA High Definition Audio)"
+}
 ```
-音符の出現順にひらがなもしくはカタカナを割り当てます。漢字や英数字はダメです。
-
-| 歌詞    | 音符  |
-|--------|--------|
-| か      | C     |
-| し      | D     |
-| を      | E     |
-| わ      | F     |
-| り      | G     |
-| あ      | A     |
-| て      | B     |
-| る      | C ※1オクターブ上  |
-
-
-長すぎて対応が取れなくなる？カンマで区切って整形する事が出来ます。
+この例だと、オプションを指定して上書きしない限り、voxsay は
 ```
-f:\sandbox>voxsay -prod voicevox -renderingmode sing -index 3008 -t O4, かしを:CDE, わりあてる:FGABO5C
-
-f:\sandbox>
+-prod voicevoxnemo -speed 1.5 -outputdevice "EX-LDGC242HT (NVIDIA High Definition Audio)" -index 10003
 ```
-小節単位で区切るなどすると分かりやすいかもしれません。
-
+が指定されたものとして動作します。
 
 
 ## 使用しているサードパーティライブラリとライセンス
