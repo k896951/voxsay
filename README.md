@@ -8,6 +8,41 @@
 
 使用前に、各音声合成製品を起動します。
 その後にvoxsay.exeをオプション無しで実行するとヘルプが出ます。
+```
+f:\sandbox>voxsay
+
+voxsay command 1.1.20 (c)2022,2023,2024 by k896951
+
+talk command line exsamples:
+    voxsay -devlist
+    voxsay -prodlist
+    voxsay <-prod TTS> [Options1] -list
+    voxsay <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
+    voxsay <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
+
+sing command line exsamples (VOICEVOX ONLY):
+    voxsay -devlist
+    voxsay <-renderingmode sing> [Options1] -list
+    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
+    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
+
+Note:
+    * The "-renderingmode sing" option is only for VOICEVOX.
+
+
+-t,-mf,-sf and -save combination:
+    -save sample.wav -t text       : Output sample.wav
+    -save sample.wav -mf textfile  : Output sample.wav
+    -save sample.wav -sf textfile  : Output sample_000001.wav, sample_000002.wav, …　Outputs a wav file for the number of lines in the textfile.
+
+
+help command line for Options1, Options2:
+    voxsay -help talk
+    voxsay -help sing
+
+
+f:\sandbox>
+```
 
 ローカルで稼働している製品一覧を確認します。
 ```
