@@ -20,9 +20,9 @@ talk command line exsamples:
 
 sing command line exsamples (VOICEVOX ONLY):
     voxsay -devlist
-    voxsay <-renderingmode sing> [Options1] -list
-    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
-    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
+    voxsay -prod voicevox -renderingmode sing [Options1] -list
+    voxsay -prod voicevox -renderingmode sing [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
+    voxsay -prod voicevox -renderingmode sing [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
 
 Note:
     * The "-renderingmode sing" option is only for VOICEVOX.
