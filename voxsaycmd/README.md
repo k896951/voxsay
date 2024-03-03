@@ -9,58 +9,34 @@ voicevox | coeiroink/v2 | lmroid | sharevox | itvoice のREST APIを呼び出し
 ```
 f:\sandbox\voxsay>voxsay
 
-voxsay command (c)2022,2023,2024 by k896951
+voxsay command 1.1.20 (c)2022,2023,2024 by k896951
 
-command line exsamples:
+talk command line exsamples:
     voxsay -devlist
     voxsay -prodlist
-    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] -list
-    voxsay <-prod TTS> [-host host] [-port port] [-renderingmode mode] <-index N> [-samplingrate Hz] [ -save FILENAME | -outputdevice DEV ] [option [option [... [option] ] ] ] -t TALKTEXT
+    voxsay <-prod TTS> [Options1] -list
+    voxsay <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
+    voxsay <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
 
-Options:
-    -devlist              : List playback device.
-    -prodlist             : List available local TTS products.
-    -prod TTS             : Select tts product.
-                              TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
-    -renderingmode MODE   : Select rendering mode. default is "talk".
-                              MODE := talk | sing
-    -host                 : Host name of TTS service running.
-    -port                 : Port number of TTS service running.
-    -list                 : List speakers for a given product.
-
-    -index N              : specify the speaker index.
-                            Example: -index 4 -> Speak with the 4th speaker.
-
-    -samplingrate Hz      : Change audio sampling rate. Default is 44100 (44.1kHz).
-                            Example : -samplingrate 8000 -> Change the sampling rate to 8kHz.
-                            Note: Quantization bit number is 16bit only.
-
-    -save FILENAME        : Save audio with specified file name.
-                            Example: -save Hellow  -> Output audio to file "Hellow.wav".
-                            Note: No audio playback with this option.
-
-    -outputdevice DEV     : Change playback device.
-                            Example: -outputdevice "OUT(UA-4FX)" -> Output audio to device "OUT(UA-4FX)"
-
-    -speed P              : specify the speedScale.        Default: 1    Range:  0.5  .. 2    Step: 0.01
-                                                           Default: 100  Range:  0    .. 100  Step: 1.00 * sapi
-    -pitch P              : specify the pitchScale.        Default: 0    Range: -0.15 .. 0.15 Step: 0.01
-    -intonation P         : specify the intonationScale.   Default: 1    Range:  0    .. 2    Step: 0.01
-    -volume P             : specify the volumeScale.       Default: 1    Range:  0    .. 2    Step: 0.01
-                                                           Default: 0    Range: -10   .. 10   Step: 1.00 * sapi
-    -prephonemelength P   : specify the prephonemelength.  Default: 0.1  Range:  0    .. 1.5  Step: 0.01
-    -postphonemelength P  : specify the postphonemelength. Default: 0.1  Range:  0    .. 1.5  Step: 0.01
-
-    -t TALKTEXT           : Text to output in tts.
-                            Example : -t Hellow world! -> say "Hello world!"
-
-        * Anything specified after -t is treated as tts text.
-        * Please refer to the value of the editor for each product for the range of P.
+sing command line exsamples (VOICEVOX ONLY):
+    voxsay -devlist
+    voxsay <-renderingmode sing> [Options1] -list
+    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
+    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
 
 Note:
-    If TTS is "sapi", only the following options are valid: -list, -save, -outputdevice, -speed, -volume, -t
+    * The "-renderingmode sing" option is only for VOICEVOX.
 
-    The renderingmode option is only for VOICEVOX.
+
+-t,-mf,-sf and -save combination:
+    -save sample.wav -t text       : Output sample.wav
+    -save sample.wav -mf textfile  : Output sample.wav
+    -save sample.wav -sf textfile  : Output sample_000001.wav, sample_000002.wav, …　Outputs a wav file for the number of lines in the textfile.
+
+
+help command line for Options1, Options2:
+    voxsay -help talk
+    voxsay -help sing
 
 
 f:\sandbox\voxsay>
