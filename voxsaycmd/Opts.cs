@@ -68,7 +68,7 @@ namespace voxsaycmd
                         break;
 
                     case "-prod":
-                        if (i + 1 > args.Length)
+                        if (i + 1 >= args.Length)
                         {
                             Console.WriteLine(@"Error: Need Product.");
                             IsSafe = false;
@@ -88,7 +88,7 @@ namespace voxsaycmd
                             IsSafe = false;
                             break;
                         }
-                        if (i + 1 > args.Length)
+                        if (i + 1 >= args.Length)
                         {
                             Console.WriteLine(@"Error: Need Hostname or Portnumber.");
                             IsSafe = false;
@@ -134,60 +134,64 @@ namespace voxsaycmd
                         break;
 
                     case "-save":
-                        if (i + 1 <= args.Length)
-                        {
-                            SaveFile = args[i + 1];
-                            i++;
-                        }
-                        else
+                        if (i + 1 >= args.Length)
                         {
                             Console.WriteLine(@"Error: Incorrect save specification.");
                             IsSafe = false;
+                            break;
                         }
+
+                        SaveFile = args[i + 1];
+                        i++;
                         break;
 
                     case "-mf":
-                        if (i + 1 <= args.Length)
-                        {
-                            Inputfilename = args[i + 1];
-                            SingWaveGenType = SingWavGenTypeEnum.allnote;
-                            TalkWaveGenType = TalkWavGenTypeEnum.allline;
-                            i++;
-                        }
-                        else
+                        if (i + 1 >= args.Length)
                         {
                             Console.WriteLine(@"Error: Incorrect mf specification.");
                             IsSafe = false;
+                            break;
                         }
+
+                        Inputfilename = args[i + 1];
+                        SingWaveGenType = SingWavGenTypeEnum.allnote;
+                        TalkWaveGenType = TalkWavGenTypeEnum.allline;
+                        i++;
                         break;
 
                     case "-sf":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 >= args.Length)
                         {
-                            Inputfilename = args[i + 1];
-                            SingWaveGenType = SingWavGenTypeEnum.splitnote;
-                            TalkWaveGenType = TalkWavGenTypeEnum.splitline;
-                            i++;
-                        }
-                        else
-                        {
-                            Console.WriteLine(@"Error: Incorrect mf specification.");
+                            Console.WriteLine(@"Error: Incorrect sf specification.");
                             IsSafe = false;
+                            break;
                         }
+
+                        Inputfilename = args[i + 1];
+                        SingWaveGenType = SingWavGenTypeEnum.splitnote;
+                        TalkWaveGenType = TalkWavGenTypeEnum.splitline;
+                        i++;
                         break;
 
 
                     case "-renderingmode":
-                        if (i + 1 <= args.Length)
-                        {
-                            RenderingMode = args[i + 1];  // "sing" or "talk" 
-                            i++;
-                        }
-                        else
+                        if (i + 1 >= args.Length)
                         {
                             Console.WriteLine(@"Error: Incorrect renderingmode specification.");
                             IsSafe = false;
+                            break;
                         }
+                        {
+                            var mode = args[i + 1].ToLower();
+                            if ((mode != "talk") && (mode != "sing"))
+                            {
+                                Console.WriteLine(@"Error: unknown renderingmode specification.");
+                                IsSafe = false;
+                                break;
+                            }
+                        }
+                        RenderingMode = args[i + 1];  // "sing" or "talk" 
+                        i++;
                         break;
 
                     case "-exportnote":
@@ -200,7 +204,7 @@ namespace voxsaycmd
 
                     case "-samplingrate":
                     case "-rsr":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             int result;
                             OutputSamplingRate = null;
@@ -224,7 +228,7 @@ namespace voxsaycmd
 
                     case "-index":
                     case "-i":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             int result;
                             Index = null;
@@ -248,7 +252,7 @@ namespace voxsaycmd
 
                     case "-outputdevice":
                     case "-od":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             OutputDevice = args[i + 1];
                             i++;
@@ -262,7 +266,7 @@ namespace voxsaycmd
 
                     case "-speed":
                     case "-spd":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             double result;
                             SpeedScale = null;
@@ -286,7 +290,7 @@ namespace voxsaycmd
 
                     case "-pitch":
                     case "-pch":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             double result;
                             PitchScale = null;
@@ -310,7 +314,7 @@ namespace voxsaycmd
 
                     case "-intonation":
                     case "-itn":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             double result;
                             IntonationScale = null;
@@ -334,7 +338,7 @@ namespace voxsaycmd
 
                     case "-volume":
                     case "-vol":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             double result;
                             VolumeScale = null;
@@ -358,7 +362,7 @@ namespace voxsaycmd
 
                     case "-prephonemelength":
                     case "-prelen":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             double result;
                             PrePhonemeLength = null;
@@ -382,7 +386,7 @@ namespace voxsaycmd
 
                     case "-postphonemelength":
                     case "-postlen":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 < args.Length)
                         {
                             double result;
                             PostPhonemeLength = null;
@@ -405,25 +409,36 @@ namespace voxsaycmd
                         break;
 
                     case "-help":
-                        if (i + 1 <= args.Length)
+                        if (i + 1 >= args.Length)
                         {
+                            Help();
+                            IsSafe = false;
+                            break;
+                        }
+
+                        {
+                            var mode = args[i + 1].ToLower();
                             switch (args[i + 1])
                             {
                                 case "talk":
                                     TalkHelp();
-                                    return;
+                                    IsSafe = false;
+                                    break;
 
                                 case "sing":
                                     SingHelp();
-                                    return;
+                                    IsSafe = false;
+                                    break;
+
+                                default:
+                                    Console.WriteLine(@"Error: Incorrect help specification.");
+                                    Help();
+                                    IsSafe = false;
+                                    break;
                             }
-                            i++;
                         }
-                        else
-                        {
-                            Console.WriteLine(@"Error: Incorrect help specification.");
-                            IsSafe = false;
-                        }
+                        i++;
+
                         break;
                 }
 
@@ -494,61 +509,21 @@ namespace voxsaycmd
                 @"
 voxsay command {0} (c)2022,2023,2024 by k896951
 
-common command line exsamples:
+talk command line exsamples:
     voxsay -devlist
     voxsay -prodlist
-
-Options:
-    -devlist              : List playback device.
-    -prodlist             : List available local TTS products. * When option ""-renderingmode talk"" is specified
-
-
-talk command line exsamples:
-    voxsay [-renderingmode talk] <-prod TTS> [Options1] -list
-    voxsay [-renderingmode talk] <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
-    voxsay [-renderingmode talk] <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
-
-Options:
-    -renderingmode talk   : Select talk rendering mode. *default is ""talk"".
-    -prod TTS             : Select tts product. TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
-    -list                 : List speakers for a given product.
-    -save FILENAME        : Save audio with specified file name.
-                            Example: -save Hellow  -> Output audio to file ""Hellow.wav"".
-                            Note: No audio playback with this option.
-    -index N              : specify the speaker index.
-                            Example: -index 4 -> use speaker index number 4.
-    -t TalkText           : TalkText to output in tts.
-                            Example : -t Hellow world! -> say ""Hello world!""
-    -mf TEXTFILE          : Output the contents of TEXTFILE in tts.
-                            Example : -mf comment.txt -> say all the contents of comment.txt.
-    -sf TEXTFILE          : Output the contents of TEXTFILE in tts.
-                            Example : -sf comment.txt -> say the contents of comment.txt by line.
-Note:
-    * Anything specified after -t is treated as tts text.
-
+    voxsay <-prod TTS> [Options1] -list
+    voxsay <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
+    voxsay <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
 
 sing command line exsamples (VOICEVOX ONLY):
+    voxsay -devlist
     voxsay <-renderingmode sing> [Options1] -list
     voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] -t  TALKTEXT
     voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
 
-Options:
-    -renderingmode sing   : Select sing rendering mode.
-    -list                 : List singers for a given product.
-    -save FILENAME        : Save audio with specified file name.
-                            Example: -save Hellow  -> Output audio to file ""Hellow.wav"".
-                            Note: No audio playback with this option.
-    -index N              : specify the singer index.
-                            Example: -index 3003 -> use singer index number 3003.
-    -t MMLtext            : MMLtext to output in VOICEVOX.
-                            Example : -t CDEF -> sing ""Do Re Mi Fa""
-    -mf MMLTEXTFILE       : Output the contents of MMLTEXTFILE in VOICEVOX.
-                            Example : -mf comment.txt -> sing the contents of the comment.txt.
-    -sf MMLTEXTFILE       : Output the contents of MMLTEXTFILE in VOICEVOX.
-                            Example : -sf comment.txt -> sing the contents of comment.txt by line.
 Note:
-    * Anything specified after -t is treated as MML text.
-    * The renderingmode option is only for VOICEVOX.
+    * The ""-renderingmode sing"" option is only for VOICEVOX.
 
 
 -t,-mf,-sf and -save combination:
@@ -568,8 +543,32 @@ help command line for Options1, Options2:
         {
             Console.WriteLine(
                 @"
-talk option help
+talk mode help
 
+talk command line exsamples:
+    voxsay -devlist
+    voxsay -prodlist
+    voxsay [-renderingmode talk] <-prod TTS> [Options1] -list
+    voxsay [-renderingmode talk] <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] -t TALKTEXT
+    voxsay [-renderingmode talk] <-prod TTS> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
+
+Options:
+    -devlist              : List playback device.
+    -prodlist             : List available local TTS products.
+    -renderingmode talk   : Select talk rendering mode. *default is ""talk"".
+    -prod TTS             : Select tts product. TTS := <sapi | voicevox | voicevoxnemo | coeiroink | coeiroinkv2 | lmroid | sharevox | itvoice>
+    -list                 : List speakers for a given product.
+    -save FILENAME        : Save audio with specified file name.
+                            Example: -save Hellow  -> Output audio to file ""Hellow.wav"".
+                            Note: No audio playback with this option.
+    -index N              : specify the speaker index.
+                            Example: -index 4 -> use speaker index number 4.
+    -t TalkText           : TalkText to output in tts.
+                            Example : -t Hellow world! -> say ""Hello world!""
+    -mf TEXTFILE          : Output the contents of TEXTFILE in tts.
+                            Example : -mf comment.txt -> say all the contents of comment.txt.
+    -sf TEXTFILE          : Output the contents of TEXTFILE in tts.
+                            Example : -sf comment.txt -> say the contents of comment.txt by line.
 Options1:
     -host                 : Host name of TTS service running.
     -port                 : Port number of TTS service running.
@@ -592,7 +591,8 @@ Options2:
     -postphonemelength P  : specify the postphonemelength. Default: 0.1  Range:  0    .. 1.5  Step: 0.01
 
 Note:
-    Please refer to the value of the editor for each product for the range of P.
+    - Anything specified after -t is treated as tts text.
+    - Please refer to the value of the editor for each product for the range of P.
 "
             );
         }
@@ -602,7 +602,29 @@ Note:
         {
             Console.WriteLine(
                 @"
-sing option help
+sing mode help
+
+sing command line exsamples (VOICEVOX ONLY):
+    voxsay -devlist
+    voxsay <-renderingmode sing> [Options1] -list
+    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] -t TALKTEXT
+    voxsay <-renderingmode sing> [Options1] [-save FILENAME] <-index N> [Options2] [ -mf | -sf ] TEXTFILE
+
+Options:
+    -devlist              : List playback device.
+    -renderingmode sing   : Select sing rendering mode.
+    -list                 : List singers for a given product.
+    -save FILENAME        : Save audio with specified file name.
+                            Example: -save Hellow  -> Output audio to file ""Hellow.wav"".
+                            Note: No audio playback with this option.
+    -index N              : specify the singer index.
+                            Example: -index 3003 -> use singer index number 3003.
+    -t MMLtext            : MMLtext to output in VOICEVOX.
+                            Example : -t CDEF -> sing ""Do Re Mi Fa""
+    -mf MMLTEXTFILE       : Output the contents of MMLTEXTFILE in VOICEVOX.
+                            Example : -mf comment.txt -> sing the contents of the comment.txt.
+    -sf MMLTEXTFILE       : Output the contents of MMLTEXTFILE in VOICEVOX.
+                            Example : -sf comment.txt -> sing the contents of comment.txt by line.
 
 Options1:
     -host                 : Host name of VOICEVOX service running.
@@ -619,7 +641,9 @@ Options2:
     -volume P             : specify the volumeScale. Default: 1 Range:0 .. 2 Step: 0.01
 
 Note:
-    Please refer to the value of the editor for each product for the range of P.
+    - Anything specified after -t is treated as MML text.
+    - The renderingmode option is only for VOICEVOX.
+    - Please refer to the value of the editor for each product for the range of P.
 "
             );
         }

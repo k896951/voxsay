@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using voxsay;
@@ -97,200 +98,208 @@ namespace voxsaycmd
                 if (opt.PostPhonemeLength != null) pm.postPhonemeLength = (double)opt.PostPhonemeLength;
                 if (opt.OutputSamplingRate != null) pm.outputSamplingRate = (int)opt.OutputSamplingRate;
 
-                Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
-
                 // とりあえずの呼び出し処理を追加
+
                 if (opt.RenderingMode == "sing")
                 {
+                    // 歌唱時
                     try
                     {
-                        var mmlObj = new VoiceVoxNoteGenerator();
-
-                        if (("" + opt.Inputfilename) == "")
-                        {
-                            var parseInfo = mmlObj.ParseSingString(opt.TalkText);
-
-                            var notes = mmlObj.ConvertScoreInfo(parseInfo);
-
-                            if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", mmlObj.ExportNotes(notes));
-                            if (opt.PrintNote) mmlObj.PrintAssignInfo(notes);
-
-                            if (opt.SaveFile != null)
-                            {
-                                string f = opt.SaveFile;
-
-                                if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
-
-                                if (!api.SaveSong((int)opt.Index, pm, notes, f)) rcd = 8;
-                            }
-                            else
-                            {
-                                if (!api.Sing((int)opt.Index, pm, notes)) rcd = 8;
-                            }
-                        }
-                        else
-                        {
-                            var parseInfoList = mmlObj.ParseSingFile(opt.Inputfilename);
-
-                            switch (opt.SingWaveGenType)
-                            {
-                                case SingWavGenTypeEnum.allnote:
-                                    var notes = mmlObj.ConvertScoreInfo(parseInfoList);
-
-                                    if (opt.ExportNote) File.WriteAllText(@".\MyScore.json", mmlObj.ExportNotes(notes));
-                                    if (opt.PrintNote) mmlObj.PrintAssignInfo(notes);
-
-                                    if (opt.SaveFile != null)
-                                    {
-                                        string f = opt.SaveFile;
-
-                                        if (!ext.IsMatch(f)) f = string.Format(@"{0}.wav", f);
-
-                                        if (!api.SaveSong((int)opt.Index, pm, notes, f)) rcd = 8;
-                                    }
-                                    else
-                                    {
-                                        if (!api.Sing((int)opt.Index, pm, notes)) rcd = 8;
-                                    }
-
-                                    break;
-
-                                case SingWavGenTypeEnum.splitnote:
-                                    int fileTailNumber = 1;
-                                    foreach (var noteItem in parseInfoList)
-                                    {
-                                        var note = mmlObj.ConvertScoreInfo(noteItem);
-
-                                        if (note.Notes.Count > 1)
-                                        {
-                                            if (opt.PrintNote) mmlObj.PrintAssignInfo(note, fileTailNumber);
-
-                                            if (opt.SaveFile != null)
-                                            {
-                                                string f = opt.SaveFile;
-
-                                                if (ext.IsMatch(f)) f = ext.Replace(f, "");
-                                                f = string.Format(@"{0}_{1:D8}.wav", f, fileTailNumber);
-
-                                                if (!api.SaveSong((int)opt.Index, pm, note, f)) rcd = 8;
-                                            }
-                                            else
-                                            {
-                                                if (!api.Sing((int)opt.Index, pm, note)) rcd = 8;
-                                            }
-                                        }
-
-                                        fileTailNumber++;
-                                    }
-
-                                    break;
-                            }
-
-                        }
-
+                        rcd = SingProcessing(ref api, ref opt, ref pm);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(string.Format(@"sing error: {0}", e.Message));
                     }
-
                 }
-                else
+
+                if (opt.RenderingMode == "talk")
                 {
+                    // トーク時
                     try
                     {
-                        if (("" + opt.Inputfilename) == "")
-                        {
-                            if (opt.SaveFile != null)
-                            {
-                                string f = opt.SaveFile;
-
-                                if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
-
-                                if (!api.Save((int)opt.Index, pm, opt.TalkText, f)) rcd = 8;
-                            }
-                            else
-                            {
-                                if (!api.Speak((int)opt.Index, pm, opt.TalkText)) rcd = 8;
-                            }
-                        }
-                        else
-                        {
-                            Stream fp;
-
-                            if ("-" == opt.Inputfilename)
-                            {
-                                fp = Console.OpenStandardInput();
-                            }
-                            else
-                            {
-                                fp = new FileStream(opt.Inputfilename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                            }
-
-                            using (StreamReader sr = new StreamReader(fp))
-                            {
-                                switch (opt.TalkWaveGenType)
-                                {
-                                    case TalkWavGenTypeEnum.allline:
-                                        StringBuilder sb = new StringBuilder();
-                                        sb.Clear();
-
-                                        while (!sr.EndOfStream)
-                                        {
-                                            sb.AppendLine(sr.ReadLine());
-                                        }
-
-                                        if (opt.SaveFile != null)
-                                        {
-                                            string f = opt.SaveFile;
-
-                                            if (!ext.IsMatch(f)) f = String.Format(@"{0}.wav", f);
-
-                                            if (!api.Save((int)opt.Index, pm, sb.ToString(), f)) rcd = 8;
-                                        }
-                                        else
-                                        {
-                                            if (!api.Speak((int)opt.Index, pm, sb.ToString())) rcd = 8;
-                                        }
-
-                                        break;
-
-                                    case TalkWavGenTypeEnum.splitline:
-                                        int fileTailNumber = 1;
-                                        while (!sr.EndOfStream)
-                                        {
-                                            if (opt.SaveFile != null)
-                                            {
-                                                string f = opt.SaveFile;
-
-                                                if (ext.IsMatch(f)) f = ext.Replace(f, "");
-                                                f = string.Format(@"{0}_{1:D8}.wav", f, fileTailNumber);
-
-                                                if (!api.Save((int)opt.Index, pm, sr.ReadLine(), f)) rcd = 8;
-                                            }
-                                            else
-                                            {
-                                                if (!api.Speak((int)opt.Index, pm, sr.ReadLine())) rcd = 8;
-                                            }
-
-                                            fileTailNumber++;
-
-                                        }
-
-                                        break;
-                                }
-
-                                sr?.Close();
-                            }
-
-                            fp?.Close();
-                        }
-
+                        rcd = TalkProcessing(ref api, ref opt, ref pm);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(string.Format(@"talk error: {0}", e.Message));
                     }
+                }
+
+            }
+
+            return rcd;
+        }
+
+        private static string GenFilename(string filename)
+        {
+            Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
+
+            return !ext.IsMatch(filename) ? String.Format(@"{0}.wav", filename) : filename;
+        }
+
+        private static string  GenFilename(string filename, int linecounter)
+        {
+            Regex ext = new Regex(@"\.[wW][aA][vV][eE]{0,1}$");
+
+            string f = ext.IsMatch(filename) ? ext.Replace(filename, "") : filename;
+
+            return string.Format(@"{0}_{1:D8}.wav", f, linecounter);
+        }
+
+        private static int TalkProcessing(ref ApiProxy api, ref Opts opt, ref SpeakerParams pm)
+        {
+            int rcd = 0;
+
+            if (("" + opt.Inputfilename) == "")
+            {
+                if (opt.SaveFile != null)
+                {
+                    if (!api.Save((int)opt.Index, pm, opt.TalkText, GenFilename(opt.SaveFile))) rcd = 8;
+                }
+                else
+                {
+                    if (!api.Speak((int)opt.Index, pm, opt.TalkText)) rcd = 8;
+                }
+            }
+            else
+            {
+                Stream fp;
+
+                if ("-" == opt.Inputfilename)
+                {
+                    fp = Console.OpenStandardInput();
+                }
+                else
+                {
+                    fp = new FileStream(opt.Inputfilename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                }
+
+                using (StreamReader sr = new StreamReader(fp))
+                {
+                    switch (opt.TalkWaveGenType)
+                    {
+                        case TalkWavGenTypeEnum.allline:
+                            StringBuilder sb = new StringBuilder();
+                            sb.Clear();
+
+                            while (!sr.EndOfStream)
+                            {
+                                sb.AppendLine(sr.ReadLine());
+                            }
+
+                            if (opt.SaveFile != null)
+                            {
+                                if (!api.Save((int)opt.Index, pm, sb.ToString(), GenFilename(opt.SaveFile))) rcd = 8;
+                            }
+                            else
+                            {
+                                if (!api.Speak((int)opt.Index, pm, sb.ToString())) rcd = 8;
+                            }
+
+                            break;
+
+                        case TalkWavGenTypeEnum.splitline:
+                            int fileTailNumber = 1;
+
+                            while (!sr.EndOfStream)
+                            {
+                                if (opt.SaveFile != null)
+                                {
+                                    if (!api.Save((int)opt.Index, pm, sr.ReadLine(), GenFilename(opt.SaveFile, fileTailNumber))) rcd = 8;
+                                }
+                                else
+                                {
+                                    if (!api.Speak((int)opt.Index, pm, sr.ReadLine())) rcd = 8;
+                                }
+
+                                fileTailNumber++;
+                            }
+
+                            break;
+                    }
+
+                    sr?.Close();
+                }
+
+                fp?.Close();
+            }
+
+            return rcd;
+
+        }
+
+        private static int SingProcessing(ref ApiProxy api, ref Opts opt, ref SpeakerParams pm)
+        {
+            var mmlObj = new VoiceVoxNoteGenerator();
+            string scorefilename = @".\MyScore.json";
+            int rcd = 0;
+
+            if (("" + opt.Inputfilename) == "")
+            {
+                var parseInfo = mmlObj.ParseSingString(opt.TalkText);
+
+                var notes = mmlObj.ConvertScoreInfo(parseInfo);
+
+                if (opt.ExportNote) File.WriteAllText(scorefilename, mmlObj.ExportNotes(notes));
+                if (opt.PrintNote) mmlObj.PrintAssignInfo(notes);
+
+                if (opt.SaveFile != null)
+                {
+                    if (!api.SaveSong((int)opt.Index, pm, notes, GenFilename(opt.SaveFile))) rcd = 8;
+                }
+                else
+                {
+                    if (!api.Sing((int)opt.Index, pm, notes)) rcd = 8;
+                }
+            }
+            else
+            {
+                var parseInfoList = mmlObj.ParseSingFile(opt.Inputfilename);
+
+                switch (opt.SingWaveGenType)
+                {
+                    case SingWavGenTypeEnum.allnote:
+                        var notes = mmlObj.ConvertScoreInfo(parseInfoList);
+
+                        if (opt.ExportNote) File.WriteAllText(scorefilename, mmlObj.ExportNotes(notes));
+                        if (opt.PrintNote) mmlObj.PrintAssignInfo(notes);
+
+                        if (opt.SaveFile != null)
+                        {
+                            if (!api.SaveSong((int)opt.Index, pm, notes, GenFilename(opt.SaveFile))) rcd = 8;
+                        }
+                        else
+                        {
+                            if (!api.Sing((int)opt.Index, pm, notes)) rcd = 8;
+                        }
+
+                        break;
+
+                    case SingWavGenTypeEnum.splitnote:
+                        int fileTailNumber = 1;
+                        foreach (var noteItem in parseInfoList)
+                        {
+                            var note = mmlObj.ConvertScoreInfo(noteItem);
+
+                            if (note.Notes.Count > 1)
+                            {
+                                if (opt.PrintNote) mmlObj.PrintAssignInfo(note, fileTailNumber);
+
+                                if (opt.SaveFile != null)
+                                {
+                                    if (!api.SaveSong((int)opt.Index, pm, note, GenFilename(opt.SaveFile, fileTailNumber))) rcd = 8;
+                                }
+                                else
+                                {
+                                    if (!api.Sing((int)opt.Index, pm, note)) rcd = 8;
+                                }
+                            }
+
+                            fileTailNumber++;
+                        }
+
+                        break;
                 }
 
             }
