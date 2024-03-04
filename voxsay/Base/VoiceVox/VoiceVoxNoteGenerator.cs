@@ -4,6 +4,8 @@ using System.Text;
 using System.Linq;
 using voxsay.Base.VoiceVox;
 using MMLParser;
+using System.Runtime.Serialization.Json;
+using System.IO;
 
 namespace voxsay
 {
@@ -276,54 +278,24 @@ namespace voxsay
         /// <returns>JSON(文字列) </returns>
         public string ExportNotes(VoiceVoxNotes mynotes)
         {
-            //DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
+            string ans;
+            DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
+            settings.UseSimpleDictionaryFormat = true;
 
-            //settings.UseSimpleDictionaryFormat = true;
-
-            //var jsonNotes = new DataContractJsonSerializer(typeof(List<VoiceVoxNotes>));
-
-            //MemoryStream ms = new MemoryStream();
-
-            //jsonNotes.WriteObject(ms, mynotes);
-
-            //var ans = Encoding.UTF8.GetString(ms.ToArray());
-            //ms.Close();
-
-            //return ans;
-
-            // インデントを入れる
-            StringBuilder sbjson = new StringBuilder();
-            bool firstline = false;
-
-            sbjson.Clear();
-
-            sbjson.AppendLine(@"{");
-            sbjson.Append("\t");
-            sbjson.AppendLine(@"""notes"":[");
-            foreach (var note in mynotes.Notes)
+            using (MemoryStream ms = new MemoryStream())
+            using (var jw = JsonReaderWriterFactory.CreateJsonWriter(ms, Encoding.UTF8, true, true))
             {
-                if (!firstline)
-                {
-                    sbjson.Append("\t\t {");
-                    firstline = true;
-                }
-                else
-                {
-                    sbjson.Append("\t\t,{");
-                }
+                var jsonNotes = new DataContractJsonSerializer(typeof(List<VoiceVoxNotes>));
 
-                sbjson.AppendFormat(@"""frame_length"":{0},", note.Frame_Length);
-                sbjson.AppendFormat(@"""key"":{0},", note.Key == null ? "null" : "" + note.Key);
-                sbjson.AppendFormat(@"""lyric"":""{0}"",", note.Lyric);
-                sbjson.AppendFormat(@"""notelen"":""{0}""", note.NoteLen);
+                jsonNotes.WriteObject(jw, mynotes);
+                jw.Flush();
+                ans = Encoding.UTF8.GetString(ms.ToArray());
 
-                sbjson.AppendLine(@"}");
+                jw?.Close();
+                ms?.Close();
             }
-            sbjson.Append("\t");
-            sbjson.AppendLine(@"]");
-            sbjson.AppendLine(@"}");
 
-            return sbjson.ToString();
+            return ans;
 
         }
 
