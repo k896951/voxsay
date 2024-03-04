@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Linq;
 using voxsay.Base.VoiceVox;
@@ -149,7 +147,8 @@ namespace voxsay
                 {
                     Lyric = "",
                     Frame_Length = 2, // 多分最小
-                    Key = null
+                    Key = null,
+                    NoteLen = "R"
                 };
                 voiceVoxNotes.Notes.Add(noteRinfo);
 
@@ -170,7 +169,7 @@ namespace voxsay
                             Key = subNoteItem.Key,
                             Lyric = subNoteItem.Lyric,
                             Frame_Length = subFrames,
-                            NoteLen = subNoteItem.NoteLen
+                            NoteLen = subNoteItem.Note + subNoteItem.NoteLen
                         };
 
                         // 分割した音符のフレーム数合計
@@ -277,18 +276,55 @@ namespace voxsay
         /// <returns>JSON(文字列) </returns>
         public string ExportNotes(VoiceVoxNotes mynotes)
         {
-            DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
+            //DataContractJsonSerializerSettings settings = new DataContractJsonSerializerSettings();
 
-            settings.UseSimpleDictionaryFormat = true;
+            //settings.UseSimpleDictionaryFormat = true;
 
-            var jsonNotes = new DataContractJsonSerializer(typeof(List<VoiceVoxNotes>));
-            MemoryStream ms = new MemoryStream();
+            //var jsonNotes = new DataContractJsonSerializer(typeof(List<VoiceVoxNotes>));
 
-            jsonNotes.WriteObject(ms, mynotes);
+            //MemoryStream ms = new MemoryStream();
 
-            var ans = Encoding.UTF8.GetString(ms.ToArray());
+            //jsonNotes.WriteObject(ms, mynotes);
 
-            return ans;
+            //var ans = Encoding.UTF8.GetString(ms.ToArray());
+            //ms.Close();
+
+            //return ans;
+
+            // インデントを入れる
+            StringBuilder sbjson = new StringBuilder();
+            bool firstline = false;
+
+            sbjson.Clear();
+
+            sbjson.AppendLine(@"{");
+            sbjson.Append("\t");
+            sbjson.AppendLine(@"""notes"":[");
+            foreach (var note in mynotes.Notes)
+            {
+                if (!firstline)
+                {
+                    sbjson.Append("\t\t {");
+                    firstline = true;
+                }
+                else
+                {
+                    sbjson.Append("\t\t,{");
+                }
+
+                sbjson.AppendFormat(@"""frame_length"":{0},", note.Frame_Length);
+                sbjson.AppendFormat(@"""key"":{0},", note.Key == null ? "null" : "" + note.Key);
+                sbjson.AppendFormat(@"""lyric"":""{0}"",", note.Lyric);
+                sbjson.AppendFormat(@"""notelen"":""{0}""", note.NoteLen);
+
+                sbjson.AppendLine(@"}");
+            }
+            sbjson.Append("\t");
+            sbjson.AppendLine(@"]");
+            sbjson.AppendLine(@"}");
+
+            return sbjson.ToString();
+
         }
 
         /// <summary>
@@ -306,7 +342,7 @@ namespace voxsay
                 if(note.Key is null)
                 {
                     // "R"
-                    Console.WriteLine(@"{0,4:D}     {1,6:D} {2,1:G} {3,-6:D}", noteindex, note.Frame_Length, "", "R" + note.NoteLen);
+                    Console.WriteLine(@"{0,4:D}     {1,6:D} {2,1:G} {3,-6:D}", noteindex, note.Frame_Length, "", note.NoteLen);
                 }
                 else
                 {
@@ -314,7 +350,7 @@ namespace voxsay
                     var noteStr = KeyToNote((int)note.Key);
                     var noteOctave = KeyToOctave((int)note.Key);
 
-                    Console.WriteLine(@"{0,4:D} {1,3:G} {2,6:D} {3,1:G} {4,-6:D} {5}", noteindex, note.Key, note.Frame_Length, noteOctave, noteStr + note.NoteLen, note.Lyric);
+                    Console.WriteLine(@"{0,4:D} {1,3:G} {2,6:D} {3,1:G} {4,-6:D} {5}", noteindex, note.Key, note.Frame_Length, noteOctave, note.NoteLen, note.Lyric);
                 }
 
                 noteindex++;
