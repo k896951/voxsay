@@ -2,6 +2,9 @@
 
 音声合成製品 VOICEVOX、VOICEVOX Nemo、COEIROINK/v2、LMROID、SHAREVOX、ITVOICE、 のREST APIを呼び出して音声再生するWindows用のCUIクライアント
 
+2024-03-21
+.NET8へ移植した[voxsay2](https://github.com/k896951/voxsay2)を公開しました。
+
 ## 使用方法
 
 [こちら](https://github.com/k896951/voxsay/wiki)を参照してください。
